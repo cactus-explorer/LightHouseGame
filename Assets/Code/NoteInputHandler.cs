@@ -20,21 +20,59 @@ public class NoteInputHandler : MonoBehaviour
         int keyIndex = -1;
         string keyName = string.Empty;
 
+        // Only use the 5 note keys: A, S, D, F, and Space (with overlapping ship controls)
         if (keyboard.aKey.wasPressedThisFrame)
         {
             keyIndex = 0;
             keyName = "A";
-            if (shipSpawner != null) shipSpawner.MoveShipsUp();
+            if (shipSpawner != null)
+            {
+                shipSpawner.MoveShipTypeUp("DinghyA");
+                shipSpawner.MoveShipTypeUp("GalleonA");
+            }
         }
         else if (keyboard.sKey.wasPressedThisFrame)
         {
             keyIndex = 1;
             keyName = "S";
-            if (shipSpawner != null) shipSpawner.MoveShipsDown();
+            if (shipSpawner != null)
+            {
+                shipSpawner.MoveShipTypeDown("DinghyA");
+                shipSpawner.MoveShipTypeUp("SloopB");
+            }
         }
-        else if (keyboard.dKey.wasPressedThisFrame) { keyIndex = 2; keyName = "D"; }
-        else if (keyboard.fKey.wasPressedThisFrame) { keyIndex = 3; keyName = "F"; }
-        else if (keyboard.spaceKey.wasPressedThisFrame) { keyIndex = 4; keyName = "Space"; }
+        else if (keyboard.dKey.wasPressedThisFrame)
+        {
+            keyIndex = 2;
+            keyName = "D";
+            if (shipSpawner != null)
+            {
+                shipSpawner.MoveShipTypeDown("DinghyB");
+                shipSpawner.MoveShipTypeDown("SloopB");
+                shipSpawner.MoveShipTypeUp("GalleonB");
+            }
+        }
+        else if (keyboard.fKey.wasPressedThisFrame)
+        {
+            keyIndex = 3;
+            keyName = "F";
+            if (shipSpawner != null)
+            {
+                shipSpawner.MoveShipTypeUp("SloopA");
+                shipSpawner.MoveShipTypeDown("GalleonA");
+            }
+        }
+        else if (keyboard.spaceKey.wasPressedThisFrame)
+        {
+            keyIndex = 4;
+            keyName = "Space";
+            if (shipSpawner != null)
+            {
+                shipSpawner.MoveShipTypeUp("DinghyB");
+                shipSpawner.MoveShipTypeDown("SloopA");
+                shipSpawner.MoveShipTypeDown("GalleonB");
+            }
+        }
 
         if (keyIndex != -1)
         {

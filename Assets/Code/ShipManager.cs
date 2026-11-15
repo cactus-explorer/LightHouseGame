@@ -1,212 +1,295 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.InputSystem;
 
 public class ShipSpawner : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private HexGridSystem hexGrid;
-    [SerializeField] private GameObject shipPrefab;
+    [Header("Ship Prefabs (6 Slots: GalleonA, GalleonB, SloopA, SloopB, DinghyA, DinghyB)")]
+    [SerializeField] private GameObject[] shipPrefabs = new GameObject[6];
 
-    [Header("Settings")]
-    [SerializeField] private int spawnInterval = 5;
-    [SerializeField] private float shipHeightOffset = 0.2f;
+    [Header("Spawn Settings")]
+    [SerializeField] private int advancesPerSpawn = 5;
     [SerializeField] private Color fallbackShipColor = Color.cyan;
     [SerializeField] private bool pressEnterToAdvance = true;
 
+    private HexGridSystem gridSystem;
+    private List<ShipInstance> activeShips = new List<ShipInstance>();
+    private int advanceCounter = 0;
+    private List<Vector2Int> farLeftHexes = new List<Vector2Int>();
+
     private class ShipInstance
     {
-        public GameObject gameObject;
-        public Vector2Int coord;
+        public GameObject shipObject;
+        public Vector2Int axialCoord;
+        public string shipType;
+        public int pendingVerticalDelta; // Queue vertical move for next Advance()
+        public GameObject uiCanvasObj;
     }
-
-    private readonly List<ShipInstance> activeShips = new List<ShipInstance>();
-    private List<Vector2Int> farLeftHexes = new List<Vector2Int>();
-    private int advanceCount = 0;
-    private bool isInitialized = false;
-    private int pendingVerticalDelta = 0;
 
     void Start()
     {
-        if (hexGrid == null)
+        StartCoroutine(InitializeRoutine());
+    }
+
+    private System.Collections.IEnumerator InitializeRoutine()
+    {
+        // Wait until HexGridSystem is found and has generated its grid
+        while (gridSystem == null)
         {
-            hexGrid = FindAnyObjectByType<HexGridSystem>();
+            gridSystem = FindAnyObjectByType<HexGridSystem>();
+            yield return null;
         }
 
-        if (hexGrid == null)
-        {
-            Debug.LogError("ShipSpawner: No HexGridSystem found in the scene.");
-            return;
-        }
+        // Wait one frame to ensure HexGridSystem's Start() has fully executed
+        yield return null;
 
-        TryInitializeSpawner();
+        InitializeSpawner();
     }
 
     void Update()
     {
-        // Ensure initialization runs once HexGridSystem has populated its hexes
-        if (!isInitialized)
+        if (gridSystem == null)
         {
-            TryInitializeSpawner();
+            gridSystem = FindAnyObjectByType<HexGridSystem>();
+            if (gridSystem != null)
+            {
+                InitializeSpawner();
+            }
+            return;
         }
 
-        // Optional debug input to test Advance() in Play Mode
-        if (pressEnterToAdvance && Keyboard.current != null && 
-            (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null) return;
+
+        // Check Enter key for advancing
+        if (pressEnterToAdvance && (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame))
         {
             Advance();
         }
     }
 
-    private void TryInitializeSpawner()
+    private void InitializeSpawner()
     {
-        if (hexGrid == null) return;
-
         CacheFarLeftHexes();
-        if (farLeftHexes.Count > 0)
+        if (activeShips.Count == 0 && farLeftHexes.Count > 0)
         {
-            SpawnShipOnFarLeft();
-            isInitialized = true;
+            SpawnInitialShip();
         }
     }
 
     private void CacheFarLeftHexes()
     {
         farLeftHexes.Clear();
-        List<Vector2Int> allCoords = hexGrid.GetAllHexCoords().ToList();
+        if (gridSystem == null) return;
 
-        if (allCoords.Count == 0) return;
-
-        // A hex is on the "far left" if there is no adjacent hex directly to its left (-1, 0)
-        foreach (Vector2Int coord in allCoords)
+        foreach (var coord in gridSystem.GetAllHexCoords())
         {
+            // A hex is on the far left edge if its left-neighbor (q - 1) does not exist in the grid
             Vector2Int leftNeighbor = new Vector2Int(coord.x - 1, coord.y);
-            if (!hexGrid.HasHex(leftNeighbor))
+            if (!gridSystem.HasHex(leftNeighbor))
             {
                 farLeftHexes.Add(coord);
             }
         }
     }
 
-    /// <summary>
-    /// Moves all active ships one hex to the right (+q) and spawns a new ship every 5 advances.
-    /// </summary>
+    private void SpawnInitialShip()
+    {
+        SpawnShipAtAvailableFarLeft();
+    }
+
     public void Advance()
     {
-        if (hexGrid == null) return;
+        // 1. Move all existing ships right and apply pending vertical movement
+        List<ShipInstance> shipsToRemove = new List<ShipInstance>();
 
-        // Re-cache if Start() order caused this to be empty on first run
-        if (farLeftHexes.Count == 0)
+        foreach (var ship in activeShips)
         {
-            CacheFarLeftHexes();
-        }
+            // Apply queued vertical delta combined with rightward step (+1, 0)
+            int targetQ = ship.axialCoord.x + 1;
+            int targetR = ship.axialCoord.y + ship.pendingVerticalDelta;
 
-        // 1. Move existing ships one hex to the right (+1, 0 in pointy-top axial coordinates)
-        //    plus any queued vertical movement from MoveShipsUp() / MoveShipsDown()
-        int verticalDelta = pendingVerticalDelta;
-        pendingVerticalDelta = 0;
+            // Reset pending vertical delta now that it's consumed
+            ship.pendingVerticalDelta = 0;
 
-        for (int i = activeShips.Count - 1; i >= 0; i--)
-        {
-            ShipInstance ship = activeShips[i];
-            Vector2Int nextCoord;
+            Vector2Int targetCoord = new Vector2Int(targetQ, targetR);
 
-            if (verticalDelta > 0)
+            if (gridSystem.HasHex(targetCoord))
             {
-                // Up-right neighbor in pointy-top axial coordinates is (0, +1)
-                nextCoord = new Vector2Int(ship.coord.x, ship.coord.y + 1);
-                if (!hexGrid.HasHex(nextCoord))
-                {
-                    // Fallback to straight right if blocked at the top edge
-                    nextCoord = new Vector2Int(ship.coord.x + 1, ship.coord.y);
-                }
-            }
-            else if (verticalDelta < 0)
-            {
-                // Down-right neighbor in pointy-top axial coordinates is (+1, -1)
-                nextCoord = new Vector2Int(ship.coord.x + 1, ship.coord.y - 1);
-                if (!hexGrid.HasHex(nextCoord))
-                {
-                    // Fallback to straight right if blocked at the bottom edge
-                    nextCoord = new Vector2Int(ship.coord.x + 1, ship.coord.y);
-                }
+                ship.axialCoord = targetCoord;
+                UpdateShipTransform(ship);
             }
             else
             {
-                // Straight right neighbor is (+1, 0)
-                nextCoord = new Vector2Int(ship.coord.x + 1, ship.coord.y);
-            }
-
-            if (hexGrid.HasHex(nextCoord))
-            {
-                ship.coord = nextCoord;
-                ship.gameObject.transform.position = hexGrid.GetHexWorldPosition(nextCoord) + Vector3.up * shipHeightOffset;
-            }
-            else
-            {
-                // Ship has sailed past the right edge of the grid
-                Destroy(ship.gameObject);
-                activeShips.RemoveAt(i);
+                // Ship sailed off the right edge of the grid
+                if (ship.shipObject != null) Destroy(ship.shipObject);
+                if (ship.uiCanvasObj != null) Destroy(ship.uiCanvasObj);
+                shipsToRemove.Add(ship);
             }
         }
 
-        // 2. Increment advance counter and spawn a new ship every 5 advances
-        advanceCount++;
-        if (advanceCount % spawnInterval == 0)
+        foreach (var ship in shipsToRemove)
         {
-            SpawnShipOnFarLeft();
+            activeShips.Remove(ship);
+        }
+
+        // 2. Increment advance counter and spawn new ship every N advances
+        advanceCounter++;
+        if (advanceCounter >= advancesPerSpawn)
+        {
+            advanceCounter = 0;
+            SpawnShipAtAvailableFarLeft();
         }
     }
 
-    /// <summary>
-    /// Queues all active ships to move one hex upward (+r in axial coordinates) on the next Advance().
-    /// </summary>
-    public void MoveShipsUp()
-    {
-        pendingVerticalDelta = 1;
-    }
-
-    /// <summary>
-    /// Queues all active ships to move one hex downward (-r in axial coordinates) on the next Advance().
-    /// </summary>
-    public void MoveShipsDown()
-    {
-        pendingVerticalDelta = -1;
-    }
-
-    private void SpawnShipOnFarLeft()
+    private void SpawnShipAtAvailableFarLeft()
     {
         if (farLeftHexes.Count == 0) return;
 
-        // Prefer spawning on an unoccupied far-left hex if available
-        List<Vector2Int> availableSpawns = farLeftHexes
-            .Where(c => !activeShips.Any(s => s.coord == c))
-            .ToList();
+        // Find far left hexes not currently occupied by a ship
+        List<Vector2Int> availableHexes = farLeftHexes
+        .Where(h => !activeShips.Any(s => s.axialCoord == h))
+        .ToList();
 
-        List<Vector2Int> spawnPool = availableSpawns.Count > 0 ? availableSpawns : farLeftHexes;
-        Vector2Int spawnCoord = spawnPool[Random.Range(0, spawnPool.Count)];
-
-        Vector3 worldPos = hexGrid.GetHexWorldPosition(spawnCoord) + Vector3.up * shipHeightOffset;
-        GameObject shipObj = CreateShipObject(worldPos);
-
-        activeShips.Add(new ShipInstance
+        if (availableHexes.Count == 0)
         {
-            gameObject = shipObj,
-            coord = spawnCoord
-        });
+            availableHexes = farLeftHexes; // Fallback to any far-left hex if full
+        }
+
+        Vector2Int spawnCoord = availableHexes[Random.Range(0, availableHexes.Count)];
+        Vector3 worldPos = gridSystem.GetHexWorldPosition(spawnCoord);
+
+        string shipType;
+        GameObject shipObj = CreateShipObject(worldPos, out shipType);
+
+        // Determine up/down keys for this ship type to display on UI
+        string upKey = GetUpKeyForType(shipType);
+        string downKey = GetDownKeyForType(shipType);
+        GameObject uiCanvas = CreateShipKeyUI(shipObj.transform, upKey, downKey);
+
+        ShipInstance newShip = new ShipInstance
+        {
+            shipObject = shipObj,
+            axialCoord = spawnCoord,
+            shipType = shipType,
+            pendingVerticalDelta = 0,
+            uiCanvasObj = uiCanvas
+        };
+
+        activeShips.Add(newShip);
+        UpdateShipTransform(newShip);
     }
 
-    private GameObject CreateShipObject(Vector3 position)
+    private string GetUpKeyForType(string typeName)
     {
-        if (shipPrefab != null)
+        if (typeName.Contains("DinghyA")) return "A";
+        if (typeName.Contains("DinghyB")) return "Space";
+        if (typeName.Contains("SloopA")) return "F";
+        if (typeName.Contains("SloopB")) return "Q / S";
+        if (typeName.Contains("GalleonA")) return "A";
+        if (typeName.Contains("GalleonB")) return "D";
+        return "Up";
+    }
+
+    private string GetDownKeyForType(string typeName)
+    {
+        if (typeName.Contains("DinghyA")) return "S";
+        if (typeName.Contains("DinghyB")) return "D";
+        if (typeName.Contains("SloopA")) return "Space";
+        if (typeName.Contains("SloopB")) return "D";
+        if (typeName.Contains("GalleonA")) return "F";
+        if (typeName.Contains("GalleonB")) return "Space";
+        return "Down";
+    }
+
+    private void UpdateShipTransform(ShipInstance ship)
+    {
+        if (ship.shipObject != null && gridSystem != null)
         {
-            return Instantiate(shipPrefab, position, Quaternion.Euler(0, 90, 0), transform);
+            Vector3 targetPos = gridSystem.GetHexWorldPosition(ship.axialCoord);
+            targetPos.y += 0.2f; // Slight elevation above hex
+            ship.shipObject.transform.position = targetPos;
+        }
+
+        if (ship.uiCanvasObj != null && ship.shipObject != null)
+        {
+            ship.uiCanvasObj.transform.position = ship.shipObject.transform.position + Vector3.up * 0.8f;
+        }
+    }
+
+    public void MoveShipTypeUp(string shipType)
+    {
+        foreach (var ship in activeShips)
+        {
+            if (ship.shipType.Equals(shipType, System.StringComparison.OrdinalIgnoreCase))
+            {
+                ship.pendingVerticalDelta = 1; // Queue move up-right (+r)
+            }
+        }
+    }
+
+    public void MoveShipTypeDown(string shipType)
+    {
+        foreach (var ship in activeShips)
+        {
+            if (ship.shipType.Equals(shipType, System.StringComparison.OrdinalIgnoreCase))
+            {
+                ship.pendingVerticalDelta = -1; // Queue move down-right (-r)
+            }
+        }
+    }
+
+    private GameObject CreateShipKeyUI(Transform parent, string upKey, string downKey)
+    {
+        GameObject canvasObj = new GameObject("ShipKeyUI");
+        canvasObj.transform.SetParent(parent, false);
+        canvasObj.transform.localPosition = new Vector3(0, 1.2f, 0); // Raised higher above ship
+
+        Canvas canvas = canvasObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace;
+        canvasObj.AddComponent<UnityEngine.UI.CanvasScaler>();
+        canvasObj.AddComponent<BillboardConstraint>();
+
+        RectTransform rect = canvasObj.GetComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(200, 100);
+        rect.localScale = new Vector3(0.015f, 0.015f, 0.015f); // Increased scale for better readability
+
+        GameObject textObj = new GameObject("Text");
+        textObj.transform.SetParent(canvasObj.transform, false);
+
+        TMPro.TextMeshProUGUI tmp = textObj.AddComponent<TMPro.TextMeshProUGUI>();
+        tmp.text = $"▲ {upKey}\n▼ {downKey}";
+        tmp.fontSize = 24; // Larger font size
+        tmp.fontStyle = TMPro.FontStyles.Bold;
+        tmp.alignment = TMPro.TextAlignmentOptions.Center;
+        tmp.color = Color.yellow;
+
+        RectTransform textRect = textObj.GetComponent<RectTransform>();
+        textRect.sizeDelta = new Vector2(200, 100);
+        textRect.anchoredPosition = Vector2.zero;
+
+        return canvasObj;
+    }
+
+    private GameObject CreateShipObject(Vector3 position, out string shipType)
+    {
+        // Filter out any null slots in the 6-element prefab array
+        List<GameObject> validPrefabs = shipPrefabs != null
+        ? shipPrefabs.Where(p => p != null).ToList()
+        : new List<GameObject>();
+
+        if (validPrefabs.Count > 0)
+        {
+            GameObject chosenPrefab = validPrefabs[Random.Range(0, validPrefabs.Count)];
+            shipType = chosenPrefab.name;
+            return Instantiate(chosenPrefab, position, Quaternion.Euler(0, 90, 0), transform);
         }
 
         // Fallback procedural ship visual if no prefab is assigned
+        shipType = "DinghyA";
         GameObject fallback = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        fallback.name = "Ship";
+        fallback.name = shipType;
         fallback.transform.SetParent(transform);
         fallback.transform.position = position;
         fallback.transform.localScale = new Vector3(0.6f, 0.25f, 0.35f);
@@ -218,5 +301,31 @@ public class ShipSpawner : MonoBehaviour
         }
 
         return fallback;
+    }
+}
+
+/// <summary>
+/// Simple billboard component to keep world-space arrow indicator canvases facing the camera.
+/// </summary>
+public class BillboardConstraint : MonoBehaviour
+{
+    private Camera cam;
+
+    void Start()
+    {
+        cam = Camera.main;
+    }
+
+    void LateUpdate()
+    {
+        if (cam == null)
+        {
+            cam = Camera.main;
+            if (cam == null) return;
+        }
+
+        // Rotate canvas to face the camera directly
+        transform.LookAt(transform.position + cam.transform.rotation * Vector3.forward,
+                         cam.transform.rotation * Vector3.up);
     }
 }

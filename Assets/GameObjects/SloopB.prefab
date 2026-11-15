@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4203699020206241612}
   - component: {fileID: 7854620921311464566}
   m_Layer: 0
-  m_Name: Galleon
+  m_Name: SloopB
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -67,7 +67,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9d9cf0838d3261d4cb2cbd55152ec244, type: 2}
+  - {fileID: 2100000, guid: 64e519ffcaefad131af0935562ccf94f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
