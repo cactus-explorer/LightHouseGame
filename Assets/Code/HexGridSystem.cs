@@ -7,6 +7,7 @@ public class HexGridSystem : MonoBehaviour
     [Header("Grid Settings")]
     [SerializeField] private int gridRadius = 5;
     [SerializeField] private float hexRadius = 1.0f;
+    [SerializeField] private float outlineThickness = 0.08f;
     [SerializeField] private Color defaultColor = Color.white;
     [SerializeField] private Color highlightColor = Color.yellow;
     [SerializeField] private Material tileMaterial;
@@ -27,12 +28,13 @@ public class HexGridSystem : MonoBehaviour
         // Setup fallback material if none assigned
         if (tileMaterial == null)
         {
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null) shader = Shader.Find("Unlit/Color");
             if (shader == null) shader = Shader.Find("Standard");
             tileMaterial = new Material(shader);
         }
 
-        sharedHexMesh = CreateHexMesh(hexRadius);
+        sharedHexMesh = CreateHexOutlineMesh(hexRadius, outlineThickness);
         GenerateGrid();
     }
 
@@ -55,50 +57,71 @@ public class HexGridSystem : MonoBehaviour
 
                 GameObject hexObj = new GameObject($"Hex_{q}_{r}");
                 hexObj.transform.position = worldPos;
-                hexObj.transform.parent = transform;
+                hexObj.transform.SetParent(transform, false);
 
-                MeshFilter mf = hexObj.AddComponent<MeshFilter>();
-                MeshRenderer mr = hexObj.AddComponent<MeshRenderer>();
+                MeshFilter meshFilter = hexObj.AddComponent<MeshFilter>();
+                meshFilter.sharedMesh = sharedHexMesh;
 
-                mf.sharedMesh = sharedHexMesh;
-                mr.sharedMaterial = tileMaterial;
+                MeshRenderer meshRenderer = hexObj.AddComponent<MeshRenderer>();
+                meshRenderer.sharedMaterial = tileMaterial;
 
-                SetTileColor(mr, defaultColor);
-                hexRenderers.Add(coord, mr);
+                SetTileColor(meshRenderer, defaultColor);
+                hexRenderers[coord] = meshRenderer;
             }
         }
     }
 
-    private Vector3 AxialToWorld(Vector2Int coord)
+    private Vector3 AxialToWorld(Vector2Int hex)
     {
-        // Pointy-topped hex math
-        float x = hexRadius * Mathf.Sqrt(3.0f) * (coord.x + coord.y / 2.0f);
-        float z = hexRadius * (3.0f / 2.0f) * coord.y;
+        float x = hexRadius * (Mathf.Sqrt(3.0f) * hex.x + Mathf.Sqrt(3.0f) / 2.0f * hex.y);
+        float z = hexRadius * (3.0f / 2.0f * hex.y);
         return new Vector3(x, 0, z);
     }
 
-    private Mesh CreateHexMesh(float radius)
+    private Mesh CreateHexOutlineMesh(float outerRadius, float thickness)
     {
         Mesh mesh = new Mesh();
-        Vector3[] vertices = new Vector3[7];
-        int[] triangles = new int[18];
-
-        vertices[0] = Vector3.zero;
+        
+        // Clamp thickness so inner radius remains positive
+        float innerRadius = Mathf.Max(0.01f, outerRadius - thickness);
+        
+        // 6 outer vertices + 6 inner vertices
+        Vector3[] vertices = new Vector3[12];
+        // 6 quads (2 triangles each = 12 triangles = 36 indices)
+        int[] triangles = new int[36];
 
         for (int i = 0; i < 6; i++)
         {
             float angleDeg = 60 * i - 30;
             float angleRad = Mathf.Deg2Rad * angleDeg;
-            vertices[i + 1] = new Vector3(radius * Mathf.Cos(angleRad), 0, radius * Mathf.Sin(angleRad));
+            float cos = Mathf.Cos(angleRad);
+            float sin = Mathf.Sin(angleRad);
+
+            vertices[i] = new Vector3(outerRadius * cos, 0, outerRadius * sin);
+            vertices[i + 6] = new Vector3(innerRadius * cos, 0, innerRadius * sin);
         }
 
-        // Generate triangles with corrected winding order (clockwise from above) so normals point up (+Y)
+        // Generate quads connecting outer and inner rings (clockwise from above so normals point +Y)
         for (int i = 0; i < 6; i++)
         {
             int next = (i + 1) % 6;
-            triangles[i * 3] = 0;
-            triangles[i * 3 + 1] = next + 1;
-            triangles[i * 3 + 2] = i + 1;
+
+            int outerCurrent = i;
+            int outerNext = next;
+            int innerCurrent = i + 6;
+            int innerNext = next + 6;
+
+            int triIndex = i * 6;
+
+            // First triangle of quad (wound clockwise when viewed from +Y)
+            triangles[triIndex] = outerCurrent;
+            triangles[triIndex + 1] = innerCurrent;
+            triangles[triIndex + 2] = outerNext;
+
+            // Second triangle of quad
+            triangles[triIndex + 3] = outerNext;
+            triangles[triIndex + 4] = innerCurrent;
+            triangles[triIndex + 5] = innerNext;
         }
 
         mesh.vertices = vertices;

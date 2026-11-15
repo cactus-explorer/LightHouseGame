@@ -558,6 +558,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HexGridSystem
   gridRadius: 5
   hexRadius: 1
+  outlineThickness: 0.08
   defaultColor: {r: 1, g: 1, b: 1, a: 1}
   highlightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   tileMaterial: {fileID: 2100000, guid: b345cccafe7b90ef78f7379b61f32df0, type: 2}
