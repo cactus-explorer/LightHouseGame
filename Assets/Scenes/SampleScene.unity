@@ -512,122 +512,6 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
---- !u!1 &417209115
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 417209116}
-  - component: {fileID: 417209117}
-  - component: {fileID: 417209118}
-  m_Layer: 0
-  m_Name: HexManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &417209116
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 417209115}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &417209117
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 417209115}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 715345df05a6abb69a4b170563a24a28, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HexGridSystem
-  gridRadius: 5
-  hexRadius: 1
-  outlineThickness: 0.08
-  defaultColor: {r: 1, g: 1, b: 1, a: 1}
-  highlightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  tileMaterial: {fileID: 2100000, guid: b345cccafe7b90ef78f7379b61f32df0, type: 2}
---- !u!114 &417209118
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 417209115}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47aeb04faeeea780db15f144520aadcb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ShipSpawner
-  hexGrid: {fileID: 417209117}
-  shipPrefab: {fileID: 3427594806858576982, guid: 7b3068c008a3ac8d3a0e6d8bf4c49182, type: 3}
-  spawnInterval: 5
-  shipHeightOffset: 0.2
-  fallbackShipColor: {r: 0, g: 1, b: 1, a: 1}
-  pressEnterToAdvance: 1
---- !u!1 &430187069
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 430187071}
-  - component: {fileID: 430187070}
-  m_Layer: 0
-  m_Name: GameManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &430187070
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 430187069}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ddc573529f0af614a8242f5845025915, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TimeManager
-  audioSource: {fileID: 51129757}
-  audioClip: {fileID: 8300000, guid: 33c83173b6ae78cc3b77844882543cab, type: 3}
-  currentNote: 
---- !u!4 &430187071
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 430187069}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -687,8 +571,11 @@ GameObject:
   m_Component:
   - component: {fileID: 934283173}
   - component: {fileID: 934283172}
+  - component: {fileID: 934283175}
+  - component: {fileID: 934283174}
+  - component: {fileID: 934283176}
   m_Layer: 0
-  m_Name: NoteInputHandler
+  m_Name: GameManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -706,8 +593,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40848afb81624f7549bbba23d2db7633, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NoteInputHandler
-  timeManager: {fileID: 430187070}
+  timeManager: {fileID: 0}
   sfxAudioSource: {fileID: 51129757}
+  shipSpawner: {fileID: 0}
   clipsC:
   - {fileID: 8300000, guid: 956cb2d98582d071c9e0751cf73849f9, type: 3}
   - {fileID: 8300000, guid: ad78e4c53eb2f722e90e72b5eff13906, type: 3}
@@ -741,6 +629,57 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &934283174
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47aeb04faeeea780db15f144520aadcb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipSpawner
+  hexGrid: {fileID: 934283175}
+  shipPrefab: {fileID: 3427594806858576982, guid: 7b3068c008a3ac8d3a0e6d8bf4c49182, type: 3}
+  spawnInterval: 5
+  shipHeightOffset: 0.2
+  fallbackShipColor: {r: 0, g: 1, b: 1, a: 1}
+  pressEnterToAdvance: 1
+--- !u!114 &934283175
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 715345df05a6abb69a4b170563a24a28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HexGridSystem
+  gridRadius: 5
+  hexRadius: 1
+  outlineThickness: 0.08
+  defaultColor: {r: 1, g: 1, b: 1, a: 1}
+  highlightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  tileMaterial: {fileID: 2100000, guid: b345cccafe7b90ef78f7379b61f32df0, type: 2}
+--- !u!114 &934283176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddc573529f0af614a8242f5845025915, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimeManager
+  audioSource: {fileID: 51129757}
+  audioClip: {fileID: 8300000, guid: 33c83173b6ae78cc3b77844882543cab, type: 3}
+  currentNote: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -750,5 +689,3 @@ SceneRoots:
   - {fileID: 832575519}
   - {fileID: 51129758}
   - {fileID: 934283173}
-  - {fileID: 430187071}
-  - {fileID: 417209116}

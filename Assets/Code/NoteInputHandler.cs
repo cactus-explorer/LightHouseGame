@@ -5,6 +5,7 @@ public class NoteInputHandler : MonoBehaviour
 {
     [SerializeField] private TimeManager timeManager;
     [SerializeField] private AudioSource sfxAudioSource;
+    [SerializeField] private ShipSpawner shipSpawner;
 
     [Header("Audio Clips per Note (Size 5: A, S, D, F, Space)")]
     [SerializeField] private AudioClip[] clipsC = new AudioClip[5];
@@ -19,8 +20,18 @@ public class NoteInputHandler : MonoBehaviour
         int keyIndex = -1;
         string keyName = string.Empty;
 
-        if (keyboard.aKey.wasPressedThisFrame) { keyIndex = 0; keyName = "A"; }
-        else if (keyboard.sKey.wasPressedThisFrame) { keyIndex = 1; keyName = "S"; }
+        if (keyboard.aKey.wasPressedThisFrame)
+        {
+            keyIndex = 0;
+            keyName = "A";
+            if (shipSpawner != null) shipSpawner.MoveShipsUp();
+        }
+        else if (keyboard.sKey.wasPressedThisFrame)
+        {
+            keyIndex = 1;
+            keyName = "S";
+            if (shipSpawner != null) shipSpawner.MoveShipsDown();
+        }
         else if (keyboard.dKey.wasPressedThisFrame) { keyIndex = 2; keyName = "D"; }
         else if (keyboard.fKey.wasPressedThisFrame) { keyIndex = 3; keyName = "F"; }
         else if (keyboard.spaceKey.wasPressedThisFrame) { keyIndex = 4; keyName = "Space"; }

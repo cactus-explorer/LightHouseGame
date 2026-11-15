@@ -24,12 +24,14 @@ public class ShipSpawner : MonoBehaviour
     private readonly List<ShipInstance> activeShips = new List<ShipInstance>();
     private List<Vector2Int> farLeftHexes = new List<Vector2Int>();
     private int advanceCount = 0;
+    private bool isInitialized = false;
+    private int pendingVerticalDelta = 0;
 
     void Start()
     {
         if (hexGrid == null)
         {
-            hexGrid = FindFirstObjectByType<HexGridSystem>();
+            hexGrid = FindAnyObjectByType<HexGridSystem>();
         }
 
         if (hexGrid == null)
@@ -38,23 +40,35 @@ public class ShipSpawner : MonoBehaviour
             return;
         }
 
-        // Wait a frame or initialize immediately if HexGridSystem.Start() has already run
-        InitializeSpawner();
+        TryInitializeSpawner();
     }
 
     void Update()
     {
+        // Ensure initialization runs once HexGridSystem has populated its hexes
+        if (!isInitialized)
+        {
+            TryInitializeSpawner();
+        }
+
         // Optional debug input to test Advance() in Play Mode
-        if (pressEnterToAdvance && Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
+        if (pressEnterToAdvance && Keyboard.current != null && 
+            (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame))
         {
             Advance();
         }
     }
 
-    private void InitializeSpawner()
+    private void TryInitializeSpawner()
     {
+        if (hexGrid == null) return;
+
         CacheFarLeftHexes();
-        SpawnShipOnFarLeft();
+        if (farLeftHexes.Count > 0)
+        {
+            SpawnShipOnFarLeft();
+            isInitialized = true;
+        }
     }
 
     private void CacheFarLeftHexes()
@@ -75,7 +89,9 @@ public class ShipSpawner : MonoBehaviour
         }
     }
 
+    /// <summary>
     /// Moves all active ships one hex to the right (+q) and spawns a new ship every 5 advances.
+    /// </summary>
     public void Advance()
     {
         if (hexGrid == null) return;
@@ -87,10 +103,40 @@ public class ShipSpawner : MonoBehaviour
         }
 
         // 1. Move existing ships one hex to the right (+1, 0 in pointy-top axial coordinates)
+        //    plus any queued vertical movement from MoveShipsUp() / MoveShipsDown()
+        int verticalDelta = pendingVerticalDelta;
+        pendingVerticalDelta = 0;
+
         for (int i = activeShips.Count - 1; i >= 0; i--)
         {
             ShipInstance ship = activeShips[i];
-            Vector2Int nextCoord = new Vector2Int(ship.coord.x + 1, ship.coord.y);
+            Vector2Int nextCoord;
+
+            if (verticalDelta > 0)
+            {
+                // Up-right neighbor in pointy-top axial coordinates is (0, +1)
+                nextCoord = new Vector2Int(ship.coord.x, ship.coord.y + 1);
+                if (!hexGrid.HasHex(nextCoord))
+                {
+                    // Fallback to straight right if blocked at the top edge
+                    nextCoord = new Vector2Int(ship.coord.x + 1, ship.coord.y);
+                }
+            }
+            else if (verticalDelta < 0)
+            {
+                // Down-right neighbor in pointy-top axial coordinates is (+1, -1)
+                nextCoord = new Vector2Int(ship.coord.x + 1, ship.coord.y - 1);
+                if (!hexGrid.HasHex(nextCoord))
+                {
+                    // Fallback to straight right if blocked at the bottom edge
+                    nextCoord = new Vector2Int(ship.coord.x + 1, ship.coord.y);
+                }
+            }
+            else
+            {
+                // Straight right neighbor is (+1, 0)
+                nextCoord = new Vector2Int(ship.coord.x + 1, ship.coord.y);
+            }
 
             if (hexGrid.HasHex(nextCoord))
             {
@@ -111,6 +157,22 @@ public class ShipSpawner : MonoBehaviour
         {
             SpawnShipOnFarLeft();
         }
+    }
+
+    /// <summary>
+    /// Queues all active ships to move one hex upward (+r in axial coordinates) on the next Advance().
+    /// </summary>
+    public void MoveShipsUp()
+    {
+        pendingVerticalDelta = 1;
+    }
+
+    /// <summary>
+    /// Queues all active ships to move one hex downward (-r in axial coordinates) on the next Advance().
+    /// </summary>
+    public void MoveShipsDown()
+    {
+        pendingVerticalDelta = -1;
     }
 
     private void SpawnShipOnFarLeft()
