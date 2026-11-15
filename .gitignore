@@ -1,5 +1,7 @@
 # This .gitignore file should be placed at the root of your Unity project directory.
 
+/.vscode/
+
 # Unity generated directories
 /[Ll]ibrary/
 /[Tt]emp/
