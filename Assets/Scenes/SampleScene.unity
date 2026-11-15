@@ -522,6 +522,7 @@ GameObject:
   m_Component:
   - component: {fileID: 417209116}
   - component: {fileID: 417209117}
+  - component: {fileID: 417209118}
   m_Layer: 0
   m_Name: HexManager
   m_TagString: Untagged
@@ -562,6 +563,24 @@ MonoBehaviour:
   defaultColor: {r: 1, g: 1, b: 1, a: 1}
   highlightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   tileMaterial: {fileID: 2100000, guid: b345cccafe7b90ef78f7379b61f32df0, type: 2}
+--- !u!114 &417209118
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 417209115}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47aeb04faeeea780db15f144520aadcb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShipSpawner
+  hexGrid: {fileID: 417209117}
+  shipPrefab: {fileID: 3427594806858576982, guid: 7b3068c008a3ac8d3a0e6d8bf4c49182, type: 3}
+  spawnInterval: 5
+  shipHeightOffset: 0.2
+  fallbackShipColor: {r: 0, g: 1, b: 1, a: 1}
+  pressEnterToAdvance: 1
 --- !u!1 &430187069
 GameObject:
   m_ObjectHideFlags: 0

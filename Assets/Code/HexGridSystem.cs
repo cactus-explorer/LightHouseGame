@@ -78,6 +78,12 @@ public class HexGridSystem : MonoBehaviour
         return new Vector3(x, 0, z);
     }
 
+    public bool HasHex(Vector2Int coord) => hexRenderers.ContainsKey(coord);
+
+    public IEnumerable<Vector2Int> GetAllHexCoords() => hexRenderers.Keys;
+
+    public Vector3 GetHexWorldPosition(Vector2Int coord) => transform.TransformPoint(AxialToWorld(coord));
+
     private Mesh CreateHexOutlineMesh(float outerRadius, float thickness)
     {
         Mesh mesh = new Mesh();
