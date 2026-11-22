@@ -143,6 +143,35 @@ public class ShipManager : MonoBehaviour
         }
     }
 
+    // ------------------------------------------------------------------ Hazards
+
+    public IEnumerable<Vector2Int> ShipCoords => activeShips.Where(s => !s.removed).Select(s => s.coord);
+
+    public bool IsShipAt(Vector2Int coord) => activeShips.Any(s => !s.removed && s.coord == coord);
+
+    /// <summary>
+    /// 1 damage to the ship on this hex, if any (sea monster attacks, storms breaking).
+    /// Called from ObstacleManager at the start of a turn, before ships move.
+    /// </summary>
+    public bool DamageShipAt(Vector2Int coord)
+    {
+        var s = activeShips.FirstOrDefault(x => !x.removed && x.coord == coord);
+        if (s == null) return false;
+
+        Vector3 here = ShipPos(s.coord);
+        s.hp--;
+        OnShipDamaged?.Invoke(here);
+        if (s.hp <= 0)
+        {
+            s.removed = true;
+            s.wrecked = true;
+            WreckedCount++;
+            OnShipWrecked?.Invoke(here);
+        }
+        UpdateLabel(s);
+        return true;
+    }
+
     // ------------------------------------------------------------------ Input
 
     /// <summary>Queue a steer for every ship of this type. Last press in a turn wins.</summary>

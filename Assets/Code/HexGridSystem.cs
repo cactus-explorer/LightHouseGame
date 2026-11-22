@@ -113,6 +113,21 @@ public class HexGridSystem : MonoBehaviour
         return result;
     }
 
+    /// <summary>World-space box around every hex (used to size the map and frame the camera).</summary>
+    public Bounds GetWorldBounds()
+    {
+        bool first = true;
+        Bounds b = new Bounds(transform.position, Vector3.zero);
+        foreach (var coord in hexRenderers.Keys)
+        {
+            Vector3 p = GetHexWorldPosition(coord);
+            var hex = new Bounds(p, new Vector3(hexRadius * 2f, 0f, hexRadius * 2f));
+            if (first) { b = hex; first = false; }
+            else b.Encapsulate(hex);
+        }
+        return b;
+    }
+
     public void SetHexColor(Vector2Int coord, Color color)
     {
         if (hexRenderers.TryGetValue(coord, out Renderer r)) SetTileColor(r, color);

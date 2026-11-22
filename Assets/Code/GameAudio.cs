@@ -9,10 +9,12 @@ public class GameAudio : MonoBehaviour
     [SerializeField] private ShipManager shipManager;
     [SerializeField] private TimeManager timeManager;
     [SerializeField] private GameManager gameManager;
+    [SerializeField] private ObstacleManager obstacleManager;
 
     [Header("Sources (created automatically if empty)")]
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private AudioSource ambienceSource;
+    [SerializeField] private AudioSource stormAmbienceSource;
 
     [Header("Clips")]
     [Tooltip("Water slosh when ships coast forward a tile. Plays once per turn.")]
@@ -29,6 +31,15 @@ public class GameAudio : MonoBehaviour
     [Tooltip("Looping waves and seagulls.")]
     [SerializeField] private AudioClip seaAmbience;
 
+    [Header("Hazard Clips")]
+    [SerializeField] private AudioClip monsterAppears;
+    [SerializeField] private AudioClip monsterRoar;
+    [Tooltip("Plays when grey storm clouds first appear (the warning turn).")]
+    [SerializeField] private AudioClip stormWarning;
+    [SerializeField] private AudioClip thunder;
+    [Tooltip("Looping rain/wind, faded in while any storm is active.")]
+    [SerializeField] private AudioClip stormAmbience;
+
     [Header("Volume")]
     [SerializeField, Range(0f, 1f)] private float sfxVolume = 0.8f;
     [SerializeField, Range(0f, 1f)] private float ambienceVolume = 0.4f;
@@ -38,6 +49,7 @@ public class GameAudio : MonoBehaviour
         if (shipManager == null) shipManager = FindAnyObjectByType<ShipManager>();
         if (timeManager == null) timeManager = FindAnyObjectByType<TimeManager>();
         if (gameManager == null) gameManager = FindAnyObjectByType<GameManager>();
+        if (obstacleManager == null) obstacleManager = FindAnyObjectByType<ObstacleManager>();
 
         if (sfxSource == null) sfxSource = gameObject.AddComponent<AudioSource>();
         sfxSource.playOnAwake = false;
@@ -51,6 +63,23 @@ public class GameAudio : MonoBehaviour
             ambienceSource.Play();
         }
 
+        if (stormAmbience != null)
+        {
+            if (stormAmbienceSource == null) stormAmbienceSource = gameObject.AddComponent<AudioSource>();
+            stormAmbienceSource.clip = stormAmbience;
+            stormAmbienceSource.loop = true;
+            stormAmbienceSource.volume = 0f;
+            stormAmbienceSource.Play();
+        }
+
+        if (obstacleManager != null)
+        {
+            obstacleManager.OnMonsterAppeared += HandleMonsterAppeared;
+            obstacleManager.OnMonsterAttack += HandleMonsterAttack;
+            obstacleManager.OnStormWarning += HandleStormWarning;
+            obstacleManager.OnStormStrike += HandleStormStrike;
+        }
+
         if (shipManager != null)
         {
             shipManager.OnTurnAdvanced += HandleTurn;
@@ -62,8 +91,23 @@ public class GameAudio : MonoBehaviour
         if (gameManager != null) gameManager.OnGameOver += HandleGameOver;
     }
 
+    void Update()
+    {
+        // Fade the storm loop in while a storm is active, out when it clears.
+        if (stormAmbienceSource == null || obstacleManager == null) return;
+        float target = obstacleManager.AnyStormActive ? ambienceVolume : 0f;
+        stormAmbienceSource.volume = Mathf.MoveTowards(stormAmbienceSource.volume, target, Time.deltaTime * 0.5f);
+    }
+
     void OnDestroy()
     {
+        if (obstacleManager != null)
+        {
+            obstacleManager.OnMonsterAppeared -= HandleMonsterAppeared;
+            obstacleManager.OnMonsterAttack -= HandleMonsterAttack;
+            obstacleManager.OnStormWarning -= HandleStormWarning;
+            obstacleManager.OnStormStrike -= HandleStormStrike;
+        }
         if (shipManager != null)
         {
             shipManager.OnTurnAdvanced -= HandleTurn;
@@ -90,4 +134,8 @@ public class GameAudio : MonoBehaviour
     private void HandleSaved(Vector3 _) => Play(shipSaved);
     private void HandleChord(int index, string chord) => Play(chordChangeClick);
     private void HandleGameOver(bool won) => Play(won ? levelWon : levelLost);
+    private void HandleMonsterAppeared(Vector3 _) => Play(monsterAppears);
+    private void HandleMonsterAttack(Vector3 _) => Play(monsterRoar);
+    private void HandleStormWarning(Vector3 _) => Play(stormWarning);
+    private void HandleStormStrike(Vector3 _) => Play(thunder);
 }

@@ -56,3 +56,30 @@ If an old `ShipSpawner.cs` exists, delete it.
 5. After a level ends, **M** goes back to the menu and **R** restarts. If you rename the menu scene, change **Menu Scene Name** on GameManager to match.
 
 **For the keeper's study later:** put a collider and a **MenuInteractable** on any 3D object (window = Play, bed = Quit, letter = How to Play) and set its hover text. It lights up on hover and runs its action on click. Turn off **Show Buttons** on MainMenu once the study objects replace the buttons, and lower **Background Dim** so the scene shows through.
+
+## Sea monster and thunderstorms
+
+Both are spawned by **ObstacleManager**, so no extra setup is needed. Tune them in its Inspector.
+
+**Sea monster** (`SeaMonster.cs`). By default 1 monster appears on turn 6, at least 3 hexes from any ship.
+- Each turn it shows a **red arrow and a red hex** where it will move next turn.
+- At the start of the next turn it moves there. If a ship is on that hex, it **attacks** instead: the ship takes 1 damage and the monster stays put.
+- Ships can't sail into the monster's hex; it counts like a rock.
+- It chases the nearest ship 60% of the time and wanders otherwise (**Chase Chance** on the component).
+- Placeholder: a purple capsule. Assign **Monster Prefab** when there's a model; the prefab can carry its own `SeaMonster` component to tweak.
+
+**Thunderstorms** (`Thunderstorm.cs`). By default one storm of 2–4 hexes every 5 turns, starting on turn 10.
+- **Warning turn:** small grey clouds and grey hexes. Ships can still pass.
+- **Active (3 turns):** dark clouds, purple hexes, and a lightning flash when it breaks. Entering costs 1 HP. A ship sitting there when it breaks also takes 1 damage.
+- Then it clears by itself.
+- Placeholder: a flattened sphere. Assign **Storm Prefab** for a cloud model (its first child gets scaled and recoloured).
+
+Hazards never appear in the first 2 columns (**Spawn Safe Columns**), so new ships always get a turn to react.
+
+**New sound slots on GameAudio:** Monster Appears, Monster Roar (attack), Storm Warning, Thunder, and Storm Ambience (a loop that fades in while a storm is active). Thunder plays once per storm, not once per hex.
+
+## Map and camera
+
+- **MapBackground:** add it to any object and it lays a flat map under the grid, sized to fit. Drop the painted sea map into **Map Texture** (or a full material into **Map Material**). With nothing assigned you get a plain parchment-coloured sea. It keeps the texture's aspect ratio.
+- **Semi-transparent grid:** for the "grid over a map" look, give HexGridSystem's **Tile Material** a transparent unlit material (URP: Surface Type = Transparent) and lower **Default Color**'s alpha to about 0.4.
+- **CameraRig:** put it on the Main Camera. It tilts the camera (55° by default, Inscryption-style) and pulls it back to fit the whole grid. Right-click the component and choose **Frame Grid Now** to preview. Keep **Yaw** at 0, because the game treats +Z as up on screen.
