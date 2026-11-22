@@ -26,6 +26,9 @@ public class GameAudio : MonoBehaviour
     [SerializeField] private AudioClip shipSaved;
     [Tooltip("Gear shift / mechanical click as the bells swap to the new key.")]
     [SerializeField] private AudioClip chordChangeClick;
+    [Tooltip("Ticks once a second in the last few seconds of a turn.")]
+    [SerializeField] private AudioClip turnWarningTick;
+    [SerializeField] private float warningSeconds = 2f;
     [SerializeField] private AudioClip levelWon;
     [SerializeField] private AudioClip levelLost;
     [Tooltip("Looping waves and seagulls.")]
@@ -91,8 +94,12 @@ public class GameAudio : MonoBehaviour
         if (gameManager != null) gameManager.OnGameOver += HandleGameOver;
     }
 
+    private int lastTickSecond = -1;
+
     void Update()
     {
+        UpdateWarningTick();
+
         // Fade the storm loop in while a storm is active, out when it clears.
         if (stormAmbienceSource == null || obstacleManager == null) return;
         float target = obstacleManager.AnyStormActive ? ambienceVolume : 0f;
@@ -127,6 +134,20 @@ public class GameAudio : MonoBehaviour
     private void HandleTurn(int turn)
     {
         if (shipManager.ActiveShipCount > 0) Play(moveSlosh);
+    }
+
+    private void UpdateWarningTick()
+    {
+        if (turnWarningTick == null || timeManager == null || !timeManager.IsPlaying) return;
+        if (shipManager != null && (!shipManager.IsRunning || shipManager.ActiveShipCount == 0)) return;
+
+        float left = timeManager.TimeUntilNextChord;
+        int second = Mathf.CeilToInt(left);
+        if (left <= warningSeconds && second != lastTickSecond && second > 0)
+        {
+            Play(turnWarningTick);
+        }
+        lastTickSecond = second;
     }
 
     private void HandleDamaged(Vector3 _) => Play(crack);

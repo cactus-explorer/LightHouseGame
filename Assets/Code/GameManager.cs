@@ -28,6 +28,17 @@ public class GameManager : MonoBehaviour
     public int MaxWrecks => maxWrecks;
     public int Saved => shipManager != null ? shipManager.SavedCount : 0;
     public int Wrecked => shipManager != null ? shipManager.WreckedCount : 0;
+    public int HitsTaken { get; private set; }
+    public int TurnsTaken => shipManager != null ? shipManager.TurnNumber : 0;
+
+    /// <summary>0 if lost. On a win: 3 stars with no wrecks, 2 with one, otherwise 1.</summary>
+    public int Stars => CurrentState != State.Won ? 0 : Wrecked == 0 ? 3 : Wrecked == 1 ? 2 : 1;
+
+    /// <summary>Best star rating ever reached in this scene (saved between sessions).</summary>
+    public int BestStars => PlayerPrefs.GetInt(BestStarsKey, 0);
+    public bool NewBest { get; private set; }
+
+    private string BestStarsKey => "BestStars_" + SceneManager.GetActiveScene().name;
 
     void Start()
     {
@@ -39,6 +50,7 @@ public class GameManager : MonoBehaviour
         }
         shipManager.OnShipSaved += HandleShipEvent;
         shipManager.OnShipWrecked += HandleShipEvent;
+        shipManager.OnShipDamaged += HandleDamaged;
     }
 
     void OnDestroy()
@@ -46,6 +58,12 @@ public class GameManager : MonoBehaviour
         if (shipManager == null) return;
         shipManager.OnShipSaved -= HandleShipEvent;
         shipManager.OnShipWrecked -= HandleShipEvent;
+        shipManager.OnShipDamaged -= HandleDamaged;
+    }
+
+    private void HandleDamaged(Vector3 _)
+    {
+        if (CurrentState == State.Playing) HitsTaken++;
     }
 
     void Update()
@@ -68,6 +86,13 @@ public class GameManager : MonoBehaviour
     {
         CurrentState = won ? State.Won : State.Lost;
         shipManager.SetRunning(false);
+
+        if (won && Stars > BestStars)
+        {
+            NewBest = BestStars > 0; // first-ever win isn't a "new best", just a result
+            PlayerPrefs.SetInt(BestStarsKey, Stars);
+            PlayerPrefs.Save();
+        }
         Debug.Log(won ? "Level won!" : "Level lost.");
         OnGameOver?.Invoke(won);
     }

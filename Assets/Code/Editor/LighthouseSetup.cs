@@ -50,6 +50,16 @@ public static class LighthouseSetup
         Ensure<PauseMenu>(host, log);
         Ensure<TutorialLetter>(host, log);
         Ensure<MapBackground>(host, log);
+        Ensure<FeedbackFX>(host, log);
+
+        // The bell tower gets its own object, since it's placed in the world.
+        if (Object.FindAnyObjectByType<BellTower>(FindObjectsInactive.Include) == null)
+        {
+            var towerObj = new GameObject("BellTower");
+            Undo.RegisterCreatedObjectUndo(towerObj, "Create BellTower");
+            Undo.AddComponent<BellTower>(towerObj);
+            log.Add("Added a BellTower object.");
+        }
 
         AssignAudio(host, time, notes, log);
         AssignShipPrefabs(ships, log);

@@ -107,3 +107,12 @@ Hazards never appear in the first 2 columns (**Spawn Safe Columns**), so new shi
 - **TutorialLetter** shows a 5-page letter from the previous keeper when the level starts, with the game paused until it's closed. Enter, Space or Next turns the page; Backspace goes back; Esc skips. The pages are editable in the Inspector, and `{goal}` / `{wrecks}` are filled in from GameManager.
 - By default the letter shows automatically only the first time someone plays, but **always in the editor** so it's easy to test. Use **Lighthouse > Show Tutorial Letter Again** to reset it. It can always be reopened from the pause menu.
 - Add a page-turn sound in **Page Turn Sound** if Vi makes one.
+
+## Game feel, turn warning, results and the bell tower
+
+**Lighthouse > Set Up Game Scene** adds all of these. To add them by hand: put FeedbackFX on the GameManager object, and BellTower on **its own** empty object.
+
+- **FeedbackFX:** camera shake, a burst of spray and floating text ("-1", "Wrecked!", "Home!", "Something stirs...") when ships are hit, wrecked or saved, the monster appears, or a storm breaks. Strengths and colours are in the Inspector. **Splash Prefab** takes a real particle effect if you have one.
+- **Turn warning:** in the last 2 seconds of each turn the HUD timer bar turns red and pulses. GameAudio ticks once a second if you assign **Turn Warning Tick**.
+- **Results screen:** shows ships home, wrecked, hits taken and turns. A win gets 1–3 stars (3 = no wrecks, 2 = one wreck), and the best rating is remembered per scene.
+- **BellTower:** a lighthouse with five bells beside the grid. A bell swings and glows when its key is played, and all the bells take on the current chord's colour (C gold, F teal, G pink) with a small shiver when the chord changes. That's the in-world "the bells swap to the new key" moment. It places itself just off the grid's bottom-left corner (turn off **Auto Place** to position it yourself), and CameraRig keeps it in shot. **Tower Prefab** and **Bell Prefab** take real models; bells swing around their pivot, so a bell model should hang down from its origin.

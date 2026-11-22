@@ -37,6 +37,15 @@ public class CameraRig : MonoBehaviour
         Bounds b = gridSystem.GetWorldBounds();
         if (b.size == Vector3.zero) b = new Bounds(gridSystem.transform.position, new Vector3(20f, 0f, 16f));
 
+        // Keep the bell tower in shot too (flattened, so its height doesn't tilt the framing).
+        var tower = FindAnyObjectByType<BellTower>();
+        if (tower != null && tower.IsBuilt)
+        {
+            Bounds t = tower.GetBounds();
+            b.Encapsulate(new Vector3(t.min.x, b.center.y, t.min.z));
+            b.Encapsulate(new Vector3(t.max.x, b.center.y, t.max.z));
+        }
+
         Vector3 focus = b.center + Vector3.forward * focusOffsetZ;
         Quaternion rot = Quaternion.Euler(pitch, yaw, 0f);
 
