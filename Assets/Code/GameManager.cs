@@ -75,11 +75,14 @@ public class GameManager : MonoBehaviour
     public void Restart()
     {
         // The scene has to be in the build's scene list for this to work.
+        GamePause.Clear();
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void ReturnToMenu()
     {
-        if (HasMenu) SceneManager.LoadScene(menuSceneName);
+        if (!HasMenu) return;
+        GamePause.Clear();
+        SceneManager.LoadScene(menuSceneName);
     }
 }

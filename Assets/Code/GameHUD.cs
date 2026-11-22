@@ -59,7 +59,11 @@ public class GameHUD : MonoBehaviour
             statsText.text = $"Saved  {shipManager.SavedCount}{goal}\nWrecked  {shipManager.WreckedCount}{limit}";
         }
 
-        if (timeManager != null && timeManager.IsPlaying)
+        if (timeManager != null && timeManager.IsPaused)
+        {
+            chordText.text = "Paused";
+        }
+        else if (timeManager != null && timeManager.IsPlaying)
         {
             chordText.text = $"Chord {timeManager.CurrentNote}   <size=70%>{timeManager.TimeUntilNextChord:0.0}s</size>";
             timerFill.anchorMax = new Vector2(1f - timeManager.ChordProgress, 1f);

@@ -30,6 +30,8 @@ public class NoteInputHandler : MonoBehaviour
 
     void Update()
     {
+        if (GamePause.BlocksInput) return;
+
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null) return;
 

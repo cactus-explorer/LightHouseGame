@@ -130,6 +130,7 @@ public class MainMenu : MonoBehaviour
             yield return null;
         }
         fadeGroup.alpha = 1f;
+        GamePause.Clear();
         SceneManager.LoadScene(gameSceneName);
     }
 

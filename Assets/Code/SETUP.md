@@ -1,5 +1,22 @@
 # Lighthouse Game: MVP scripts setup
 
+## Quick setup (recommended)
+
+There's now a **Lighthouse** menu in the editor's top bar:
+
+1. Open `SampleScene` and choose **Lighthouse > Set Up Game Scene**. It adds every missing game component to the GameManager object, removes broken "missing script" components, and fills empty slots by name (the bgm, the `PianoC/F/G_1-5` note clips, and the ship prefabs in `Assets/GameObjects`). It never overwrites a slot that's already filled, so you can run it again any time. **Save the scene afterwards.**
+2. Choose **Lighthouse > Create Main Menu Scene**. It makes `Assets/Scenes/MainMenu.unity` and puts it first in the build scene list.
+3. Press Play in `MainMenu`.
+
+The manual steps below are still there if you'd rather wire things by hand.
+
+## Important: commit your .meta files
+
+The repo's `.gitignore` used to exclude `*.meta`. Unity stores the ID of every script, model, sound and material in those files, and scenes and prefabs point at assets by those IDs. Without them, anyone who clones the repo gets "missing script" components and empty slots.
+
+This branch removes that line. **Chloe:** your local `.meta` files will now appear as new files in GitHub Desktop. Commit all of them (Assets and ProjectSettings) so everyone's scene matches yours. Everyone else: after pulling them, close and reopen Unity.
+
+
 Drop all the `.cs` files into `Assets/Scripts/` and **replace** the old HexGridSystem, ShipManager, NoteInputHandler and TimeManager.
 If an old `ShipSpawner.cs` exists, delete it.
 
@@ -83,3 +100,10 @@ Hazards never appear in the first 2 columns (**Spawn Safe Columns**), so new shi
 - **MapBackground:** add it to any object and it lays a flat map under the grid, sized to fit. Drop the painted sea map into **Map Texture** (or a full material into **Map Material**). With nothing assigned you get a plain parchment-coloured sea. It keeps the texture's aspect ratio.
 - **Semi-transparent grid:** for the "grid over a map" look, give HexGridSystem's **Tile Material** a transparent unlit material (URP: Surface Type = Transparent) and lower **Default Color**'s alpha to about 0.4.
 - **CameraRig:** put it on the Main Camera. It tilts the camera (55° by default, Inscryption-style) and pulls it back to fit the whole grid. Right-click the component and choose **Frame Grid Now** to preview. Keep **Yaw** at 0, because the game treats +Z as up on screen.
+
+## Pause menu and the keeper's letter
+
+- **Esc** pauses: time, the music and therefore the turn timer all stop. The pause menu has Resume, Restart, Main Menu, Keeper's Letter and a volume setting (saved between sessions).
+- **TutorialLetter** shows a 5-page letter from the previous keeper when the level starts, with the game paused until it's closed. Enter, Space or Next turns the page; Backspace goes back; Esc skips. The pages are editable in the Inspector, and `{goal}` / `{wrecks}` are filled in from GameManager.
+- By default the letter shows automatically only the first time someone plays, but **always in the editor** so it's easy to test. Use **Lighthouse > Show Tutorial Letter Again** to reset it. It can always be reopened from the pause menu.
+- Add a page-turn sound in **Page Turn Sound** if Vi makes one.

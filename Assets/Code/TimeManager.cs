@@ -27,6 +27,7 @@ public class TimeManager : MonoBehaviour
     public int CurrentChordIndex => currentChordIndex;
     public float ChordDuration => chordDuration;
     public bool IsPlaying => audioSource != null && audioSource.isPlaying;
+    public bool IsPaused { get; private set; }
 
     /// <summary>0 at the start of the chord, 1 just before the next one.</summary>
     public float ChordProgress
@@ -54,12 +55,29 @@ public class TimeManager : MonoBehaviour
             return;
         }
 
+        GamePause.OnPauseChanged += HandlePause;
+
         audioSource.clip = audioClip;
         audioSource.loop = true;
         audioSource.Play();
+        if (GamePause.IsPaused) HandlePause(true); // e.g. the tutorial letter opened first
 
         // Set the first chord without firing the event: the first turn shouldn't end instantly.
         SetChord(IndexAt(0f), fireEvent: false);
+    }
+
+    void OnDestroy()
+    {
+        GamePause.OnPauseChanged -= HandlePause;
+    }
+
+    /// <summary>Pausing the music pauses the turn timer too, since turns follow the music.</summary>
+    private void HandlePause(bool paused)
+    {
+        if (audioSource == null) return;
+        IsPaused = paused;
+        if (paused) audioSource.Pause();
+        else audioSource.UnPause();
     }
 
     void Update()

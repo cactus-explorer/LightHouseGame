@@ -123,7 +123,7 @@ public class ShipManager : MonoBehaviour
 
     void Update()
     {
-        if (!enterAdvancesTurn || !Debug.isDebugBuild) return;
+        if (!enterAdvancesTurn || !Debug.isDebugBuild || GamePause.BlocksInput) return;
         Keyboard keyboard = Keyboard.current;
         if (keyboard != null && (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame))
         {
