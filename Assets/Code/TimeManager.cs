@@ -1,66 +1,86 @@
-using System.Collections;
+using System;
 using UnityEngine;
 
+/// <summary>
+/// Plays the looping background track and works out which chord is playing.
+/// Fires OnChordChanged at each chord boundary; ShipManager uses it as the turn timer.
+/// </summary>
 public class TimeManager : MonoBehaviour
 {
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip audioClip;
 
-    [Header("Playback State")]
+    [Header("Chord Layout")]
+    [Tooltip("Chords in the order they play. The default matches the 32 s test track.")]
+    [SerializeField] private string[] chordNames = { "C", "F", "G", "C" };
+    [Tooltip("Seconds per chord. Also the length of one turn.")]
+    [SerializeField] private float chordDuration = 8f;
+
+    [Header("Playback State (read only)")]
     [SerializeField] private string currentNote;
+    [SerializeField] private int currentChordIndex = -1;
+
+    /// <summary>Chord index (0-based) and chord name. Fired on every change, including the loop back to the start.</summary>
+    public event Action<int, string> OnChordChanged;
+
     public string CurrentNote => currentNote;
+    public int CurrentChordIndex => currentChordIndex;
+    public float ChordDuration => chordDuration;
+    public bool IsPlaying => audioSource != null && audioSource.isPlaying;
+
+    /// <summary>0 at the start of the chord, 1 just before the next one.</summary>
+    public float ChordProgress
+    {
+        get
+        {
+            if (!IsPlaying || chordDuration <= 0f) return 0f;
+            return Mathf.Clamp01((PlaybackTime % chordDuration) / chordDuration);
+        }
+    }
+
+    public float TimeUntilNextChord => chordDuration * (1f - ChordProgress);
+
+    // timeSamples is more precise than time for long clips.
+    private float PlaybackTime =>
+        audioSource.clip != null && audioSource.clip.frequency > 0
+            ? (float)audioSource.timeSamples / audioSource.clip.frequency
+            : audioSource.time;
 
     void Start()
     {
-        if (audioSource != null && audioClip != null)
+        if (audioSource == null || audioClip == null)
         {
-            audioSource.clip = audioClip;
-            audioSource.loop = true; // Enable built-in audio looping
-            audioSource.Play();
-            StartCoroutine(NoteSequenceRoutine());
+            Debug.LogWarning("TimeManager: AudioSource or AudioClip is not assigned.");
+            return;
         }
-        else
-        {
-            Debug.LogWarning("AudioSource or AudioClip is not assigned.");
-        }
+
+        audioSource.clip = audioClip;
+        audioSource.loop = true;
+        audioSource.Play();
+
+        // Set the first chord without firing the event: the first turn shouldn't end instantly.
+        SetChord(IndexAt(0f), fireEvent: false);
     }
 
-    IEnumerator NoteSequenceRoutine()
+    void Update()
     {
-        float[] thresholds = { 0f, 8f, 16f, 24f, 32f };
-        string[] notes = { "C", "F", "G", "C" };
+        if (!IsPlaying || chordNames.Length == 0) return;
 
-        while (true) // Loop the sequence indefinitely
-        {
-            for (int i = 0; i < notes.Length; i++)
-            {
-                SetNote(notes[i]);
-
-                float targetTime = thresholds[i + 1];
-                float previousTime = audioSource.time;
-
-                while (audioSource.isPlaying)
-                {
-                    float currentTime = audioSource.time;
-
-                    // If the audio loops back to 0, time drops. Break out of the wait to reset the sequence.
-                    if (currentTime < previousTime || currentTime >= targetTime)
-                    {
-                        break;
-                    }
-
-                    previousTime = currentTime;
-                    yield return null;
-                }
-
-                if (!audioSource.isPlaying) yield break;
-            }
-        }
+        int index = IndexAt(PlaybackTime);
+        if (index != currentChordIndex) SetChord(index, fireEvent: true);
     }
 
-    void SetNote(string note)
+    private int IndexAt(float time)
     {
-        currentNote = note;
+        if (chordNames.Length == 0 || chordDuration <= 0f) return 0;
+        return Mathf.Clamp(Mathf.FloorToInt(time / chordDuration), 0, chordNames.Length - 1);
+    }
+
+    private void SetChord(int index, bool fireEvent)
+    {
+        currentChordIndex = index;
+        currentNote = chordNames.Length > 0 ? chordNames[index] : string.Empty;
         Debug.Log($"Current Note: {currentNote} at time: {audioSource.time:F2}s");
+        if (fireEvent) OnChordChanged?.Invoke(index, currentNote);
     }
 }
