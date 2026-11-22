@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b48178e81b64904b5c211ec570e99a4, type: 3}
+  m_Name: Level3_TheStorm
+  m_EditorClassIdentifier: Assembly-CSharp::LevelData
+  levelName: The Storm
+  description: Keep the light burning through the storm.
+  gridRadius: 5
+  randomRockCount: 7
+  rockCoords: []
+  randomSeed: 0
+  shipsToSave: 12
+  maxWrecks: 3
+  turnsPerSpawn: 2
+  maxShipsOnBoard: 10
+  ships:
+  - type: 0
+    unlockAfterTurn: 0
+  - type: 1
+    unlockAfterTurn: 0
+  - type: 2
+    unlockAfterTurn: 0
+  - type: 3
+    unlockAfterTurn: 3
+  - type: 4
+    unlockAfterTurn: 5
+  - type: 5
+    unlockAfterTurn: 7
+  monsterCount: 2
+  monsterFirstTurn: 5
+  storms: 1
+  stormFirstTurn: 6
+  turnsBetweenStorms: 4
+  stormSize: {x: 2, y: 4}
+  stormActiveTurns: 3
+  music: {fileID: 0}
+  musicSpeed: 1.2
+  showTutorialLetter: 0

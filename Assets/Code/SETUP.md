@@ -122,3 +122,20 @@ Hazards never appear in the first 2 columns (**Spawn Safe Columns**), so new shi
 - **Turn warning:** in the last 2 seconds of each turn the HUD timer bar turns red and pulses. GameAudio ticks once a second if you assign **Turn Warning Tick**.
 - **Results screen:** shows ships home, wrecked, hits taken and turns. A win gets 1–3 stars (3 = no wrecks, 2 = one wreck), and the best rating is remembered per scene.
 - **BellTower:** a lighthouse with five bells beside the grid. A bell swings and glows when its key is played, and all the bells take on the current chord's colour (C gold, F teal, G pink) with a small shiver when the chord changes. That's the in-world "the bells swap to the new key" moment. It places itself just off the grid's bottom-left corner (turn off **Auto Place** to position it yourself), and CameraRig keeps it in shot. **Tower Prefab** and **Bell Prefab** take real models; bells swing around their pivot, so a bell model should hang down from its origin.
+
+## Levels
+
+There are three levels, listed in `Assets/Resources/LevelCatalog.asset`, with each level's settings in `Assets/Levels/`. **LevelLoader** (on the GameManager object) applies the current level's settings before anything else starts. The Inspector values on the other components only matter when there's no catalog.
+
+| Level | Map | Goal | Ships | Hazards | Music speed |
+| --- | --- | --- | --- | --- | --- |
+| 1. Calm Waters | radius 4, 4 rocks | save 6 | dinghies, then SloopA from turn 8 | none | 1.0 (8 s turns) |
+| 2. Fog Rolls In | radius 5, 6 rocks | save 10 | five types, GalleonA from turn 8 | 1 sea monster from turn 6 | 1.1 (~7.3 s) |
+| 3. The Storm | radius 5, 7 rocks | save 12 | all six | 2 monsters from turn 5, storms every 4 turns from turn 6 | 1.2 (~6.7 s) |
+
+All three allow 3 wrecks. The keeper's letter shows on level 1 only.
+
+- **Flow:** winning unlocks the next level, and the results screen says **N for next level**. The menu's Play button becomes **Continue (Level N)**, and a **Levels** panel lets you replay any unlocked level and shows its best stars.
+- **Music speed** speeds up the same track, which also raises its pitch. When Vi makes faster tracks, drop each one into that level's **Music** slot and set **Music Speed** back to 1.
+- **Testing a level:** set **Editor Test Level** on LevelLoader (1, 2 or 3) and press Play in `SampleScene`. **Lighthouse > Reset Level Progress** locks everything again.
+- **Adding a level:** Assets > Create > Lighthouse > Level, fill it in, and add it to the end of LevelCatalog's list. Ship prefabs come from ShipManager's spawn table in the scene, matched by type.

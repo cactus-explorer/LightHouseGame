@@ -51,6 +51,7 @@ public static class LighthouseSetup
         Ensure<TutorialLetter>(host, log);
         Ensure<MapBackground>(host, log);
         Ensure<FeedbackFX>(host, log);
+        Ensure<LevelLoader>(host, log);
 
         // The bell tower gets its own object, since it's placed in the world.
         if (Object.FindAnyObjectByType<BellTower>(FindObjectsInactive.Include) == null)
@@ -126,6 +127,13 @@ public static class LighthouseSetup
 
         EditorBuildSettings.scenes = scenes.ToArray();
         Debug.Log("Lighthouse: build scene list is now: " + string.Join(", ", scenes.Select(s => Path.GetFileNameWithoutExtension(s.path))));
+    }
+
+    [MenuItem("Lighthouse/Reset Level Progress")]
+    public static void ResetLevelProgress()
+    {
+        LevelProgress.ResetAll();
+        Debug.Log("Lighthouse: level unlocks and stars cleared. Only level 1 is unlocked.");
     }
 
     [MenuItem("Lighthouse/Show Tutorial Letter Again")]

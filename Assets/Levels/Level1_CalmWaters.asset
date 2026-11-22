@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b48178e81b64904b5c211ec570e99a4, type: 3}
+  m_Name: Level1_CalmWaters
+  m_EditorClassIdentifier: Assembly-CSharp::LevelData
+  levelName: Calm Waters
+  description: A quiet night to learn the bells.
+  gridRadius: 4
+  randomRockCount: 4
+  rockCoords: []
+  randomSeed: 0
+  shipsToSave: 6
+  maxWrecks: 3
+  turnsPerSpawn: 2
+  maxShipsOnBoard: 6
+  ships:
+  - type: 0
+    unlockAfterTurn: 0
+  - type: 1
+    unlockAfterTurn: 4
+  - type: 2
+    unlockAfterTurn: 8
+  monsterCount: 0
+  monsterFirstTurn: 6
+  storms: 0
+  stormFirstTurn: 10
+  turnsBetweenStorms: 5
+  stormSize: {x: 2, y: 4}
+  stormActiveTurns: 3
+  music: {fileID: 0}
+  musicSpeed: 1
+  showTutorialLetter: 1

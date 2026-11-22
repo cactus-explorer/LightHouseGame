@@ -16,6 +16,9 @@ public class TimeManager : MonoBehaviour
     [Tooltip("Seconds per chord. Also the length of one turn.")]
     [SerializeField] private float chordDuration = 8f;
 
+    [Tooltip("Playback speed of the track. Faster = shorter turns (and a higher pitch).")]
+    [SerializeField, Range(0.5f, 2f)] private float musicSpeed = 1f;
+
     [Header("Playback State (read only)")]
     [SerializeField] private string currentNote;
     [SerializeField] private int currentChordIndex = -1;
@@ -39,7 +42,8 @@ public class TimeManager : MonoBehaviour
         }
     }
 
-    public float TimeUntilNextChord => chordDuration * (1f - ChordProgress);
+    /// <summary>Real seconds left in this turn (accounts for the track's playback speed).</summary>
+    public float TimeUntilNextChord => chordDuration * (1f - ChordProgress) / Mathf.Max(0.01f, musicSpeed);
 
     // timeSamples is more precise than time for long clips.
     private float PlaybackTime =>
@@ -59,6 +63,7 @@ public class TimeManager : MonoBehaviour
 
         audioSource.clip = audioClip;
         audioSource.loop = true;
+        audioSource.pitch = musicSpeed;
         audioSource.Play();
         if (GamePause.IsPaused) HandlePause(true); // e.g. the tutorial letter opened first
 
@@ -69,6 +74,13 @@ public class TimeManager : MonoBehaviour
     void OnDestroy()
     {
         GamePause.OnPauseChanged -= HandlePause;
+    }
+
+    /// <summary>Use a level's track and speed. Called by LevelLoader before Start.</summary>
+    public void ApplyLevel(LevelData level)
+    {
+        if (level.music != null) audioClip = level.music;
+        musicSpeed = Mathf.Clamp(level.musicSpeed, 0.5f, 2f);
     }
 
     /// <summary>Pausing the music pauses the turn timer too, since turns follow the music.</summary>

@@ -143,6 +143,34 @@ public class ShipManager : MonoBehaviour
         }
     }
 
+    // ------------------------------------------------------------------ Levels
+
+    /// <summary>
+    /// Use a level's ship settings. Called by LevelLoader before Start.
+    /// Prefabs are taken from this component's own spawn table, matched by ship type.
+    /// </summary>
+    public void ApplyLevel(LevelData level)
+    {
+        turnsPerSpawn = Mathf.Max(1, level.turnsPerSpawn);
+        maxShipsOnBoard = level.maxShipsOnBoard;
+
+        if (level.ships == null || level.ships.Length == 0) return;
+        var prefabs = new Dictionary<ShipType, GameObject>();
+        foreach (var e in spawnTable)
+        {
+            if (e.prefab != null && !prefabs.ContainsKey(e.type)) prefabs[e.type] = e.prefab;
+        }
+
+        spawnTable = level.ships
+            .Select(u => new ShipSpawnEntry
+            {
+                type = u.type,
+                unlockAfterTurn = u.unlockAfterTurn,
+                prefab = prefabs.TryGetValue(u.type, out GameObject p) ? p : null,
+            })
+            .ToArray();
+    }
+
     // ------------------------------------------------------------------ Hazards
 
     public IEnumerable<Vector2Int> ShipCoords => activeShips.Where(s => !s.removed).Select(s => s.coord);

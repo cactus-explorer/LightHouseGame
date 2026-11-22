@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Win/lose rules for the level: save enough ships to win, wreck too many and you lose.
-/// Press R after the level ends to restart, or M to go back to the menu.
+/// After the level ends: R restarts, N goes to the next level (after a win), M goes back to the menu.
 /// </summary>
 public class GameManager : MonoBehaviour
 {
@@ -34,11 +34,21 @@ public class GameManager : MonoBehaviour
     /// <summary>0 if lost. On a win: 3 stars with no wrecks, 2 with one, otherwise 1.</summary>
     public int Stars => CurrentState != State.Won ? 0 : Wrecked == 0 ? 3 : Wrecked == 1 ? 2 : 1;
 
-    /// <summary>Best star rating ever reached in this scene (saved between sessions).</summary>
-    public int BestStars => PlayerPrefs.GetInt(BestStarsKey, 0);
+    /// <summary>Best star rating ever reached on this level (saved between sessions).</summary>
+    public int BestStars => LevelProgress.GetStars(LevelLoader.CurrentIndex);
     public bool NewBest { get; private set; }
 
-    private string BestStarsKey => "BestStars_" + SceneManager.GetActiveScene().name;
+    public string LevelName => LevelLoader.Current != null ? LevelLoader.Current.levelName : "";
+    public int LevelNumber => LevelLoader.CurrentIndex + 1;
+    public int LevelCount => Mathf.Max(1, LevelLoader.LevelCount);
+    public bool HasNextLevel => LevelLoader.CurrentIndex + 1 < LevelLoader.LevelCount;
+
+    /// <summary>Use a level's goal. Called by LevelLoader before Start.</summary>
+    public void ApplyLevel(LevelData level)
+    {
+        shipsToSave = Mathf.Max(1, level.shipsToSave);
+        maxWrecks = Mathf.Max(1, level.maxWrecks);
+    }
 
     void Start()
     {
@@ -72,6 +82,7 @@ public class GameManager : MonoBehaviour
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null) return;
         if (keyboard.rKey.wasPressedThisFrame) Restart();
+        else if (CurrentState == State.Won && HasNextLevel && keyboard.nKey.wasPressedThisFrame) LoadNextLevel();
         else if (HasMenu && keyboard.mKey.wasPressedThisFrame) ReturnToMenu();
     }
 
@@ -87,11 +98,12 @@ public class GameManager : MonoBehaviour
         CurrentState = won ? State.Won : State.Lost;
         shipManager.SetRunning(false);
 
-        if (won && Stars > BestStars)
+        if (won)
         {
-            NewBest = BestStars > 0; // first-ever win isn't a "new best", just a result
-            PlayerPrefs.SetInt(BestStarsKey, Stars);
-            PlayerPrefs.Save();
+            int previous = BestStars;
+            if (LevelProgress.RecordStars(LevelLoader.CurrentIndex, Stars))
+                NewBest = previous > 0; // a first-ever win isn't a "new best", just a result
+            LevelProgress.UnlockUpTo(LevelLoader.CurrentIndex + 2);
         }
         Debug.Log(won ? "Level won!" : "Level lost.");
         OnGameOver?.Invoke(won);
@@ -102,6 +114,13 @@ public class GameManager : MonoBehaviour
         // The scene has to be in the build's scene list for this to work.
         GamePause.Clear();
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    public void LoadNextLevel()
+    {
+        if (!HasNextLevel) return;
+        LevelProgress.CurrentIndex = LevelLoader.CurrentIndex + 1;
+        Restart(); // same scene, next level's settings
     }
 
     public void ReturnToMenu()

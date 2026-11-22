@@ -40,6 +40,9 @@ public class GameHUD : MonoBehaviour
     private Image[] starImages;
     private GameObject starsRow;
     private TextMeshProUGUI gameOverStats;
+    private TextMeshProUGUI bannerText;
+    private CanvasGroup bannerGroup;
+    private float bannerTime;
     private Image[] keyImages;
     private float[] keyFlash;
     private GameObject gameOverPanel;
@@ -55,6 +58,14 @@ public class GameHUD : MonoBehaviour
 
         NoteInputHandler.OnNoteKeyPressed += FlashKey;
         if (gameManager != null) gameManager.OnGameOver += ShowGameOver;
+
+        // Level title card. It uses scaled time, so it waits while the tutorial letter is open.
+        if (LevelLoader.Current != null)
+        {
+            string desc = string.IsNullOrEmpty(LevelLoader.Current.description) ? "" : $"\n<size=45%>{LevelLoader.Current.description}</size>";
+            bannerText.text = $"<size=55%>Level {LevelLoader.CurrentIndex + 1}</size>\n{LevelLoader.Current.levelName}{desc}";
+            bannerTime = 3.5f;
+        }
     }
 
     void OnDestroy()
@@ -69,7 +80,8 @@ public class GameHUD : MonoBehaviour
         {
             string goal = gameManager != null ? $"/{gameManager.ShipsToSave}" : "";
             string limit = gameManager != null ? $"/{gameManager.MaxWrecks}" : "";
-            statsText.text = $"Saved  {shipManager.SavedCount}{goal}\nWrecked  {shipManager.WreckedCount}{limit}";
+            string level = LevelLoader.Current != null ? $"<size=75%>Level {LevelLoader.CurrentIndex + 1}</size>\n" : "";
+            statsText.text = $"{level}Saved  {shipManager.SavedCount}{goal}\nWrecked  {shipManager.WreckedCount}{limit}";
         }
 
         if (timeManager != null && timeManager.IsPaused)
@@ -89,6 +101,12 @@ public class GameHUD : MonoBehaviour
         else
         {
             chordText.text = "No music playing";
+        }
+
+        if (bannerGroup != null)
+        {
+            bannerTime = Mathf.Max(0f, bannerTime - Time.deltaTime);
+            bannerGroup.alpha = Mathf.Clamp01(bannerTime / 0.8f); // fades out over the last 0.8 s
         }
 
         for (int i = 0; i < keyImages.Length; i++)
@@ -113,6 +131,9 @@ public class GameHUD : MonoBehaviour
         for (int i = 0; i < starImages.Length; i++) starImages[i].color = i < stars ? starOnColor : starOffColor;
 
         string menu = gameManager != null && gameManager.HasMenu ? "   ·   M for menu" : "";
+        bool hasNext = won && gameManager != null && gameManager.HasNextLevel;
+        if (won && gameManager != null && !gameManager.HasNextLevel && gameManager.LevelCount > 1)
+            gameOverText.text = "The last light is kept. Well done!";
         string stats = "";
         if (gameManager != null)
         {
@@ -121,7 +142,7 @@ public class GameHUD : MonoBehaviour
             if (won && gameManager.NewBest) stats += "\n<color=#FFD24A>New best!</color>";
             else if (won && gameManager.Stars < 3) stats += "\n<size=85%>Lose no ships for 3 stars</size>";
         }
-        gameOverStats.text = $"{stats}\n\n<size=85%>Press R to {(won ? "play again" : "try again")}{menu}</size>";
+        gameOverStats.text = $"{stats}\n\n<size=85%>{(hasNext ? "<b>N for next level</b>   ·   " : "")}R to {(won ? "play again" : "try again")}{menu}</size>";
     }
 
     // ------------------------------------------------------------------ Building
@@ -140,7 +161,7 @@ public class GameHUD : MonoBehaviour
         RectTransform root = canvasObj.GetComponent<RectTransform>();
 
         // Stats, top left
-        var statsPanel = Panel(root, "Stats", new Vector2(0, 1), new Vector2(0, 1), new Vector2(30, -30), new Vector2(300, 110));
+        var statsPanel = Panel(root, "Stats", new Vector2(0, 1), new Vector2(0, 1), new Vector2(30, -30), new Vector2(300, 140));
         statsText = Text(statsPanel, "StatsText", 34, TextAlignmentOptions.Left);
         statsText.margin = new Vector4(20, 0, 20, 0);
 
@@ -172,6 +193,16 @@ public class GameHUD : MonoBehaviour
             keyImages[i].color = keyIdleColor;
             Text(key, "Label", 36, TextAlignmentOptions.Center).text = ShipControls.KeyNames[i];
         }
+
+        // Level title card, centre-top
+        var banner = Rect(root, "LevelBanner", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0, 220), new Vector2(1400, 240));
+        bannerGroup = banner.gameObject.AddComponent<CanvasGroup>();
+        bannerGroup.alpha = 0f;
+        bannerGroup.blocksRaycasts = false;
+        bannerText = Text(banner, "BannerText", 80, TextAlignmentOptions.Center);
+        bannerText.fontStyle = FontStyles.Bold;
+        bannerText.outlineWidth = 0.2f;
+        bannerText.outlineColor = new Color32(20, 14, 8, 255);
 
         // Game over, centre (hidden until the level ends)
         var overRect = Panel(root, "GameOver", new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1000, 440));

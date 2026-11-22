@@ -30,6 +30,17 @@ public class HexGridSystem : MonoBehaviour
 
     public float HexRadius => hexRadius;
 
+    /// <summary>Change the grid size. Only works before the grid is built (LevelLoader calls it first).</summary>
+    public void SetRadius(int radius)
+    {
+        if (hexRenderers.Count > 0)
+        {
+            Debug.LogWarning("HexGridSystem.SetRadius called after the grid was built; ignored.");
+            return;
+        }
+        gridRadius = Mathf.Max(1, radius);
+    }
+
     // The grid is built in Awake so every other script can use it from its own Start().
     void Awake()
     {

@@ -47,6 +47,8 @@ public class MainMenu : MonoBehaviour
 
     private AudioSource audioSource;
     private GameObject howToPlayPanel;
+    private GameObject levelsPanel;
+    private LevelCatalog catalog;
     private CanvasGroup fadeGroup;
     private TextMeshProUGUI hoverLabel;
     private MenuInteractable hovered;
@@ -54,6 +56,7 @@ public class MainMenu : MonoBehaviour
 
     void Start()
     {
+        catalog = LevelCatalog.Load();
         EnsureEventSystem();
         BuildUI();
 
@@ -78,6 +81,7 @@ public class MainMenu : MonoBehaviour
         if (keyboard != null)
         {
             if (keyboard.escapeKey.wasPressedThisFrame && howToPlayPanel.activeSelf) ShowHowToPlay(false);
+            else if (keyboard.escapeKey.wasPressedThisFrame && levelsPanel != null && levelsPanel.activeSelf) ShowLevels(false);
             else if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame) Play();
         }
 
@@ -86,12 +90,22 @@ public class MainMenu : MonoBehaviour
 
     // ------------------------------------------------------------------ Actions
 
-    public void Play()
+    /// <summary>Continue from the furthest level unlocked.</summary>
+    public void Play() => PlayLevel(Mathf.Min(LevelProgress.UnlockedCount, Mathf.Max(1, catalog.Count)) - 1);
+
+    public void PlayLevel(int index)
     {
         if (starting) return;
         starting = true;
+        LevelProgress.CurrentIndex = Mathf.Max(0, index);
         PlayClick();
         StartCoroutine(StartGameRoutine());
+    }
+
+    public void ShowLevels(bool show)
+    {
+        PlayClick();
+        if (levelsPanel != null) levelsPanel.SetActive(show);
     }
 
     public void ShowHowToPlay(bool show)
@@ -161,7 +175,7 @@ public class MainMenu : MonoBehaviour
 
         // Ignore the 3D scene while the pointer is over a button or the How to Play panel is open.
         bool pointerOnUI = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-        if (cam != null && mouse != null && !pointerOnUI && !howToPlayPanel.activeSelf)
+        if (cam != null && mouse != null && !pointerOnUI && !howToPlayPanel.activeSelf && (levelsPanel == null || !levelsPanel.activeSelf))
         {
             Ray ray = cam.ScreenPointToRay(mouse.position.ReadValue());
             if (Physics.Raycast(ray, out RaycastHit hit, 100f))
@@ -217,9 +231,14 @@ public class MainMenu : MonoBehaviour
         if (showButtons)
         {
             bool canQuit = Application.platform != RuntimePlatform.WebGLPlayer; // Quit does nothing in a browser
-            AddButton(root, "Play", new Vector2(0, 40), Play);
-            AddButton(root, "How to Play", new Vector2(0, -80), () => ShowHowToPlay(true));
-            if (canQuit) AddButton(root, "Quit", new Vector2(0, -200), Quit);
+            bool continuing = LevelProgress.UnlockedCount > 1 && catalog.Count > 1;
+            int continueLevel = Mathf.Min(LevelProgress.UnlockedCount, catalog.Count);
+            AddButton(root, continuing ? $"Continue  (Level {continueLevel})" : "Play", new Vector2(0, 80), Play, new Vector2(600, 90));
+            float y = -40;
+            if (catalog.Count > 1) { AddButton(root, "Levels", new Vector2(0, y), () => ShowLevels(true)); y -= 120; }
+            AddButton(root, "How to Play", new Vector2(0, y), () => ShowHowToPlay(true));
+            y -= 120;
+            if (canQuit) AddButton(root, "Quit", new Vector2(0, y), Quit);
         }
 
         Label(root, "Hint", "Press Enter to start", 28, new Vector2(0.5f, 0f), new Vector2(0, 60), new Vector2(800, 50))
@@ -229,6 +248,7 @@ public class MainMenu : MonoBehaviour
         hoverLabel = Label(root, "HoverText", "", 40, new Vector2(0.5f, 0f), new Vector2(0, 140), new Vector2(1200, 60));
 
         BuildHowToPlay(root);
+        if (catalog.Count > 1) BuildLevels(root);
 
         // Fade overlay, on top of everything
         var fade = Stretch(root, "Fade");
@@ -247,7 +267,7 @@ public class MainMenu : MonoBehaviour
         var sb = new StringBuilder();
         sb.AppendLine("<size=130%><b>How to Play</b></size>\n");
         sb.AppendLine("You keep the lighthouse bells. Guide every ship safely to the right side of the map.\n");
-        sb.AppendLine("• Ships sail one step right on every chord change (every 8 seconds).");
+        sb.AppendLine("• Ships sail one step right on every chord change. Later levels play faster.");
         sb.AppendLine("• Press a ship's ▲ key to steer it up, or its ▼ key to steer it down, before the turn ends.");
         sb.AppendLine("• Hitting a rock or another ship costs 1 HP. Galleons are tough; sloops are fast.");
         sb.AppendLine("• Bring enough ships home to win. Lose too many and the night is over.\n");
@@ -270,9 +290,37 @@ public class MainMenu : MonoBehaviour
         howToPlayPanel.SetActive(false);
     }
 
-    private void AddButton(RectTransform parent, string text, Vector2 position, UnityEngine.Events.UnityAction onClick)
+    private void BuildLevels(RectTransform root)
     {
-        var rect = Rect(parent, $"Button_{text}", new Vector2(0.5f, 0.5f), position, new Vector2(420, 90));
+        var panel = Rect(root, "Levels", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1100, 220 + catalog.Count * 110));
+        panel.gameObject.AddComponent<Image>().color = panelColor;
+        levelsPanel = panel.gameObject;
+        float top = panel.sizeDelta.y / 2f;
+
+        Label(panel, "Title", "<b>Choose a Night</b>", 56, new Vector2(0.5f, 0.5f), new Vector2(0, top - 70), new Vector2(1000, 80));
+
+        for (int i = 0; i < catalog.Count; i++)
+        {
+            int index = i; // captured by the click handler
+            LevelData level = catalog.Get(i);
+            bool unlocked = LevelProgress.IsUnlocked(i);
+            int stars = LevelProgress.GetStars(i);
+            string status = !unlocked ? "<size=75%>(locked)</size>"
+                          : stars > 0 ? $"<size=75%>{stars}/3 stars</size>"
+                          : "<size=75%>new</size>";
+            var button = AddButton(panel, $"{i + 1}.  {level.levelName}     {status}",
+                                   new Vector2(0, top - 170 - i * 110), () => PlayLevel(index), new Vector2(900, 90));
+            button.interactable = unlocked;
+        }
+
+        AddButton(panel, "Back", new Vector2(0, -top + 70), () => ShowLevels(false));
+        levelsPanel.SetActive(false);
+    }
+
+    private Button AddButton(RectTransform parent, string text, Vector2 position, UnityEngine.Events.UnityAction onClick,
+                             Vector2? size = null)
+    {
+        var rect = Rect(parent, $"Button_{text}", new Vector2(0.5f, 0.5f), position, size ?? new Vector2(420, 90));
         var image = rect.gameObject.AddComponent<Image>();
         image.color = Color.white; // tinted by the button's colour block
 
@@ -282,6 +330,7 @@ public class MainMenu : MonoBehaviour
         colors.highlightedColor = buttonHoverColor;
         colors.selectedColor = buttonColor;
         colors.pressedColor = buttonHoverColor * 0.8f;
+        colors.disabledColor = new Color(buttonColor.r, buttonColor.g, buttonColor.b, 0.45f);
         button.colors = colors;
         button.onClick.AddListener(onClick);
 
@@ -291,6 +340,7 @@ public class MainMenu : MonoBehaviour
         label.alignment = TextAlignmentOptions.Center;
         label.color = textColor;
         label.raycastTarget = false;
+        return button;
     }
 
     private TextMeshProUGUI Label(RectTransform parent, string name, string text, float size,

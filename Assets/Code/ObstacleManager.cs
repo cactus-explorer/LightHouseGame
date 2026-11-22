@@ -94,6 +94,21 @@ public class ObstacleManager : MonoBehaviour
         RefreshTints();
     }
 
+    /// <summary>Use a level's hazard settings. Called by LevelLoader before Start.</summary>
+    public void ApplyLevel(LevelData level)
+    {
+        randomRockCount = level.randomRockCount;
+        rockCoords = new List<Vector2Int>(level.rockCoords ?? new List<Vector2Int>());
+        randomSeed = level.randomSeed;
+        monsterCount = level.monsterCount;
+        monsterFirstTurn = level.monsterFirstTurn;
+        enableStorms = level.storms;
+        stormFirstTurn = level.stormFirstTurn;
+        turnsBetweenStorms = Mathf.Max(1, level.turnsBetweenStorms);
+        stormSize = level.stormSize;
+        stormActiveTurns = level.stormActiveTurns;
+    }
+
     // ------------------------------------------------------------------ Queries
 
     public bool IsBlocked(Vector2Int coord) =>

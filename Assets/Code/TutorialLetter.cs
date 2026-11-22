@@ -91,6 +91,9 @@ public class TutorialLetter : MonoBehaviour
         else if (keyboard.backspaceKey.wasPressedThisFrame || keyboard.leftArrowKey.wasPressedThisFrame) Back();
     }
 
+    /// <summary>LevelLoader turns the letter on for the levels that want it.</summary>
+    public void SetShowAtStart(bool show) => showAtStart = show;
+
     public void Open()
     {
         if (IsOpen || pages == null || pages.Length == 0) return;

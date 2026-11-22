@@ -583,6 +583,7 @@ GameObject:
   - component: {fileID: 934283182}
   - component: {fileID: 934283183}
   - component: {fileID: 934283184}
+  - component: {fileID: 934283190}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -854,6 +855,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc90ccdc1f0e40aaa0bb99d5fb13f9ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BellTower
+--- !u!114 &934283190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37cd7ae24c074e76b0ec3953e606b944, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelLoader
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
