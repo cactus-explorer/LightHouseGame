@@ -260,6 +260,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -574,6 +575,14 @@ GameObject:
   - component: {fileID: 934283175}
   - component: {fileID: 934283174}
   - component: {fileID: 934283176}
+  - component: {fileID: 934283177}
+  - component: {fileID: 934283178}
+  - component: {fileID: 934283179}
+  - component: {fileID: 934283180}
+  - component: {fileID: 934283181}
+  - component: {fileID: 934283182}
+  - component: {fileID: 934283183}
+  - component: {fileID: 934283184}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -595,7 +604,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NoteInputHandler
   timeManager: {fileID: 934283176}
   sfxAudioSource: {fileID: 51129757}
-  shipSpawner: {fileID: 934283174}
+  shipManager: {fileID: 934283174}
   clipsC:
   - {fileID: 8300000, guid: 956cb2d98582d071c9e0751cf73849f9, type: 3}
   - {fileID: 8300000, guid: ad78e4c53eb2f722e90e72b5eff13906, type: 3}
@@ -640,17 +649,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 47aeb04faeeea780db15f144520aadcb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ShipSpawner
-  shipPrefabs:
-  - {fileID: 3427594806858576982, guid: 56dfd39a110e55106a654e389c31a6fb, type: 3}
-  - {fileID: 3427594806858576982, guid: 7b3068c008a3ac8d3a0e6d8bf4c49182, type: 3}
-  - {fileID: 3427594806858576982, guid: 82081b9aad6c6a7f799e14aaa32f918f, type: 3}
-  - {fileID: 3427594806858576982, guid: 3a2d4d95e90fb3feda37399d4c28874c, type: 3}
-  - {fileID: 3427594806858576982, guid: ea76f9c4bf860993daef457ce0e8d885, type: 3}
-  - {fileID: 3427594806858576982, guid: 4d20303dc2fdfc771a3bfb1a04026fc0, type: 3}
-  advancesPerSpawn: 5
-  fallbackShipColor: {r: 0, g: 1, b: 1, a: 1}
-  pressEnterToAdvance: 1
+  m_EditorClassIdentifier: Assembly-CSharp::ShipManager
 --- !u!114 &934283175
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -684,6 +683,158 @@ MonoBehaviour:
   audioSource: {fileID: 51129757}
   audioClip: {fileID: 8300000, guid: 33c83173b6ae78cc3b77844882543cab, type: 3}
   currentNote: 
+--- !u!114 &934283177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f61a715db76479e81fcf038682cfb7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObstacleManager
+--- !u!114 &934283178
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf20032d45b0498aa8b484011603a634, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameManager
+--- !u!114 &934283179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3cfedc0123e416397ed645ac058962a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameHUD
+--- !u!114 &934283180
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42f14ef0660b437cb1f2dcb2f1474e41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameAudio
+--- !u!114 &934283181
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7a9dbbe2e7547a78cd9fbb23e9c29f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PauseMenu
+--- !u!114 &934283182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d43f73a42b74d4e9824735b3f2298ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialLetter
+--- !u!114 &934283183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a24e8f8c14a4efcbada46af8a9bfd5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapBackground
+--- !u!114 &934283184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 934283171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69ebf8152aea4e7eba386ec5a93638db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FeedbackFX
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89538fe472674468b9fea5e414a606be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraRig
+--- !u!1 &1200000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1200000002}
+  - component: {fileID: 1200000003}
+  m_Layer: 0
+  m_Name: BellTower
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1200000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1200000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1200000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1200000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc90ccdc1f0e40aaa0bb99d5fb13f9ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BellTower
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -693,3 +844,4 @@ SceneRoots:
   - {fileID: 832575519}
   - {fileID: 51129758}
   - {fileID: 934283173}
+  - {fileID: 1200000002}
