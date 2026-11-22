@@ -139,3 +139,12 @@ All three allow 3 wrecks. The keeper's letter shows on level 1 only.
 - **Music speed** speeds up the same track, which also raises its pitch. When Vi makes faster tracks, drop each one into that level's **Music** slot and set **Music Speed** back to 1.
 - **Testing a level:** set **Editor Test Level** on LevelLoader (1, 2 or 3) and press Play in `SampleScene`. **Lighthouse > Reset Level Progress** locks everything again.
 - **Adding a level:** Assets > Create > Lighthouse > Level, fill it in, and add it to the end of LevelCatalog's list. Ship prefabs come from ShipManager's spawn table in the scene, matched by type.
+
+## Galleon model
+
+`GalleonA` and `GalleonB` now use Vi's `Galleon.fbx` instead of a cube. Each prefab is:
+- the root, with a **Ship** component (3 HP, 1 hex per turn)
+- **GalleonModel**, the FBX, scaled to 0.04 (the Blender model is about 35 m long, so this makes it about 1.4 units, fitting a hex), turned 90° so the bow points +Z, and lowered 0.3 so the hull sits in the water
+- **Pennant**, a small flag at the masthead in the old purple materials, so A and B can be told apart at a glance
+
+If the galleon sails backwards, set GalleonModel's Y rotation to -90. If it looks too big or small, change its scale. Its sails and hull use the material imported from the FBX. To recolour them, extract the FBX's materials (Model import settings > Materials > Extract Materials) and edit those.
