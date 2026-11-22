@@ -650,6 +650,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47aeb04faeeea780db15f144520aadcb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ShipManager
+  spawnTable:
+  - type: 0
+    prefab: {fileID: 3427594806858576982, guid: 56dfd39a110e55106a654e389c31a6fb, type: 3}
+    unlockAfterTurn: 0
+  - type: 1
+    prefab: {fileID: 3427594806858576982, guid: 7b3068c008a3ac8d3a0e6d8bf4c49182, type: 3}
+    unlockAfterTurn: 3
+  - type: 2
+    prefab: {fileID: 3427594806858576982, guid: ea76f9c4bf860993daef457ce0e8d885, type: 3}
+    unlockAfterTurn: 6
+  - type: 3
+    prefab: {fileID: 3427594806858576982, guid: 4d20303dc2fdfc771a3bfb1a04026fc0, type: 3}
+    unlockAfterTurn: 9
+  - type: 4
+    prefab: {fileID: 3427594806858576982, guid: 82081b9aad6c6a7f799e14aaa32f918f, type: 3}
+    unlockAfterTurn: 12
+  - type: 5
+    prefab: {fileID: 3427594806858576982, guid: 3a2d4d95e90fb3feda37399d4c28874c, type: 3}
+    unlockAfterTurn: 15
 --- !u!114 &934283175
 MonoBehaviour:
   m_ObjectHideFlags: 0

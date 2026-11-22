@@ -4,7 +4,7 @@
 
 On this branch, `SampleScene` already has every component (on the GameManager object, plus CameraRig on the Main Camera and a BellTower object). `MainMenu.unity` exists and is first in the build scene list. Open `MainMenu` and press Play.
 
-Ship prefab and sound effect slots are still empty (you get placeholder boxes and silence for the new SFX), because the asset IDs for those files were never committed. Run **Lighthouse > Set Up Game Scene** once to fill the prefab and note-clip slots by name, then save the scene.
+The ship prefabs, bgm and piano note clips are all linked. The new sound effect slots on GameAudio (slosh, crack, shipwreck, thunder...) are empty until Vi's clips are in the project.
 
 ## Quick setup (if anything is missing)
 
