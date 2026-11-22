@@ -4,6 +4,11 @@ using System.Collections.Generic;
 
 public class HexGridSystem : MonoBehaviour
 {
+    // Axial neighbour offsets for this pointy-top layout (+r is up the screen / +Z).
+    public static readonly Vector2Int East = new Vector2Int(1, 0);
+    public static readonly Vector2Int NorthEast = new Vector2Int(0, 1);
+    public static readonly Vector2Int SouthEast = new Vector2Int(1, -1);
+
     [Header("Grid Settings")]
     [SerializeField] private int gridRadius = 5;
     [SerializeField] private float hexRadius = 1.0f;
@@ -12,6 +17,10 @@ public class HexGridSystem : MonoBehaviour
     [SerializeField] private Color highlightColor = Color.yellow;
     [SerializeField] private Material tileMaterial;
 
+    [Header("Debug")]
+    [Tooltip("Click a hex to highlight it. Off by default; handy for finding coords when placing rocks.")]
+    [SerializeField] private bool enableClickSelect = false;
+
     private Dictionary<Vector2Int, Renderer> hexRenderers = new Dictionary<Vector2Int, Renderer>();
     private Vector2Int? selectedCoord = null;
     private Camera mainCamera;
@@ -19,13 +28,25 @@ public class HexGridSystem : MonoBehaviour
     private MaterialPropertyBlock propBlock;
     private Plane groundPlane;
 
-    void Start()
+    public float HexRadius => hexRadius;
+
+    /// <summary>Change the grid size. Only works before the grid is built (LevelLoader calls it first).</summary>
+    public void SetRadius(int radius)
     {
-        mainCamera = Camera.main;
+        if (hexRenderers.Count > 0)
+        {
+            Debug.LogWarning("HexGridSystem.SetRadius called after the grid was built; ignored.");
+            return;
+        }
+        gridRadius = Mathf.Max(1, radius);
+    }
+
+    // The grid is built in Awake so every other script can use it from its own Start().
+    void Awake()
+    {
         groundPlane = new Plane(Vector3.up, Vector3.zero);
         propBlock = new MaterialPropertyBlock();
 
-        // Setup fallback material if none assigned
         if (tileMaterial == null)
         {
             Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
@@ -38,9 +59,14 @@ public class HexGridSystem : MonoBehaviour
         GenerateGrid();
     }
 
+    void Start()
+    {
+        mainCamera = Camera.main;
+    }
+
     void Update()
     {
-        HandleMouseClick();
+        if (enableClickSelect) HandleMouseClick();
     }
 
     private void GenerateGrid()
@@ -56,8 +82,8 @@ public class HexGridSystem : MonoBehaviour
                 Vector3 worldPos = AxialToWorld(coord);
 
                 GameObject hexObj = new GameObject($"Hex_{q}_{r}");
-                hexObj.transform.position = worldPos;
                 hexObj.transform.SetParent(transform, false);
+                hexObj.transform.localPosition = worldPos;
 
                 MeshFilter meshFilter = hexObj.AddComponent<MeshFilter>();
                 meshFilter.sharedMesh = sharedHexMesh;
@@ -84,50 +110,71 @@ public class HexGridSystem : MonoBehaviour
 
     public Vector3 GetHexWorldPosition(Vector2Int coord) => transform.TransformPoint(AxialToWorld(coord));
 
+    /// <summary>World position of an axial coord even if it's off the grid (used to sail ships off the edge).</summary>
+    public Vector3 GetWorldPositionUnchecked(Vector2Int coord) => transform.TransformPoint(AxialToWorld(coord));
+
+    /// <summary>Hexes whose west neighbour doesn't exist: where ships spawn.</summary>
+    public List<Vector2Int> GetLeftEdgeHexes()
+    {
+        var result = new List<Vector2Int>();
+        foreach (var coord in hexRenderers.Keys)
+        {
+            if (!HasHex(coord - East)) result.Add(coord);
+        }
+        return result;
+    }
+
+    /// <summary>World-space box around every hex (used to size the map and frame the camera).</summary>
+    public Bounds GetWorldBounds()
+    {
+        bool first = true;
+        Bounds b = new Bounds(transform.position, Vector3.zero);
+        foreach (var coord in hexRenderers.Keys)
+        {
+            Vector3 p = GetHexWorldPosition(coord);
+            var hex = new Bounds(p, new Vector3(hexRadius * 2f, 0f, hexRadius * 2f));
+            if (first) { b = hex; first = false; }
+            else b.Encapsulate(hex);
+        }
+        return b;
+    }
+
+    public void SetHexColor(Vector2Int coord, Color color)
+    {
+        if (hexRenderers.TryGetValue(coord, out Renderer r)) SetTileColor(r, color);
+    }
+
+    public void ResetHexColor(Vector2Int coord) => SetHexColor(coord, defaultColor);
+
     private Mesh CreateHexOutlineMesh(float outerRadius, float thickness)
     {
         Mesh mesh = new Mesh();
-        
-        // Clamp thickness so inner radius remains positive
         float innerRadius = Mathf.Max(0.01f, outerRadius - thickness);
-        
-        // 6 outer vertices + 6 inner vertices
+
         Vector3[] vertices = new Vector3[12];
-        // 6 quads (2 triangles each = 12 triangles = 36 indices)
         int[] triangles = new int[36];
 
         for (int i = 0; i < 6; i++)
         {
-            float angleDeg = 60 * i - 30;
-            float angleRad = Mathf.Deg2Rad * angleDeg;
+            float angleRad = Mathf.Deg2Rad * (60 * i - 30);
             float cos = Mathf.Cos(angleRad);
             float sin = Mathf.Sin(angleRad);
-
             vertices[i] = new Vector3(outerRadius * cos, 0, outerRadius * sin);
             vertices[i + 6] = new Vector3(innerRadius * cos, 0, innerRadius * sin);
         }
 
-        // Generate quads connecting outer and inner rings (clockwise from above so normals point +Y)
         for (int i = 0; i < 6; i++)
         {
             int next = (i + 1) % 6;
-
-            int outerCurrent = i;
-            int outerNext = next;
-            int innerCurrent = i + 6;
-            int innerNext = next + 6;
-
             int triIndex = i * 6;
 
-            // First triangle of quad (wound clockwise when viewed from +Y)
-            triangles[triIndex] = outerCurrent;
-            triangles[triIndex + 1] = innerCurrent;
-            triangles[triIndex + 2] = outerNext;
+            triangles[triIndex] = i;
+            triangles[triIndex + 1] = i + 6;
+            triangles[triIndex + 2] = next;
 
-            // Second triangle of quad
-            triangles[triIndex + 3] = outerNext;
-            triangles[triIndex + 4] = innerCurrent;
-            triangles[triIndex + 5] = innerNext;
+            triangles[triIndex + 3] = next;
+            triangles[triIndex + 4] = i + 6;
+            triangles[triIndex + 5] = next + 6;
         }
 
         mesh.vertices = vertices;
@@ -138,44 +185,27 @@ public class HexGridSystem : MonoBehaviour
 
     private void HandleMouseClick()
     {
-        // Check using the new Input System package
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            Vector2 mousePosition = Mouse.current.position.ReadValue();
-            Ray ray = mainCamera.ScreenPointToRay(mousePosition);
-            
-            if (groundPlane.Raycast(ray, out float enter))
-            {
-                Vector3 hitPoint = ray.GetPoint(enter);
-                Vector3 localPoint = transform.InverseTransformPoint(hitPoint);
+        if (mainCamera == null || Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame) return;
 
-                // Convert world position back to axial coordinates
-                Vector2Int clickedCoord = WorldToAxial(localPoint);
+        Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
+        if (!groundPlane.Raycast(ray, out float enter)) return;
 
-                if (hexRenderers.ContainsKey(clickedCoord))
-                {
-                    // Reset previous selection
-                    if (selectedCoord.HasValue && hexRenderers.ContainsKey(selectedCoord.Value))
-                    {
-                        SetTileColor(hexRenderers[selectedCoord.Value], defaultColor);
-                    }
+        Vector3 localPoint = transform.InverseTransformPoint(ray.GetPoint(enter));
+        Vector2Int clickedCoord = WorldToAxial(localPoint);
+        if (!hexRenderers.ContainsKey(clickedCoord)) return;
 
-                    // Highlight new selection
-                    selectedCoord = clickedCoord;
-                    SetTileColor(hexRenderers[clickedCoord], highlightColor);
-                }
-            }
-        }
+        if (selectedCoord.HasValue) ResetHexColor(selectedCoord.Value);
+        selectedCoord = clickedCoord;
+        SetHexColor(clickedCoord, highlightColor);
+        Debug.Log($"Clicked hex ({clickedCoord.x}, {clickedCoord.y})");
     }
 
     private Vector2Int WorldToAxial(Vector3 point)
     {
         float px = point.x / hexRadius;
         float pz = point.z / hexRadius;
-
-        float q = (Mathf.Sqrt(3.0f) / 3.0f * px - 1.0f / 3.0f * pz);
-        float r = (2.0f / 3.0f * pz);
-
+        float q = Mathf.Sqrt(3.0f) / 3.0f * px - 1.0f / 3.0f * pz;
+        float r = 2.0f / 3.0f * pz;
         return HexRound(q, r);
     }
 
@@ -189,22 +219,13 @@ public class HexGridSystem : MonoBehaviour
         int ry = Mathf.RoundToInt(fy);
         int rz = Mathf.RoundToInt(fz);
 
-        float x_diff = Mathf.Abs(rx - fx);
-        float y_diff = Mathf.Abs(ry - fy);
-        float z_diff = Mathf.Abs(rz - fz);
+        float xDiff = Mathf.Abs(rx - fx);
+        float yDiff = Mathf.Abs(ry - fy);
+        float zDiff = Mathf.Abs(rz - fz);
 
-        if (x_diff > y_diff && x_diff > z_diff)
-        {
-            rx = -ry - rz;
-        }
-        else if (y_diff > z_diff)
-        {
-            ry = -rx - rz;
-        }
-        else
-        {
-            rz = -rx - ry;
-        }
+        if (xDiff > yDiff && xDiff > zDiff) rx = -ry - rz;
+        else if (yDiff > zDiff) ry = -rx - rz;
+        else rz = -rx - ry;
 
         return new Vector2Int(rx, rz);
     }
@@ -212,8 +233,8 @@ public class HexGridSystem : MonoBehaviour
     private void SetTileColor(Renderer renderer, Color color)
     {
         renderer.GetPropertyBlock(propBlock);
-        propBlock.SetColor("_BaseColor", color); // URP compatibility
-        propBlock.SetColor("_Color", color);     // Built-in pipeline compatibility
+        propBlock.SetColor("_BaseColor", color); // URP
+        propBlock.SetColor("_Color", color);     // Built-in
         renderer.SetPropertyBlock(propBlock);
     }
 }

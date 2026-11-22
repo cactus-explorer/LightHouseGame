@@ -1,7 +1,8 @@
 # This .gitignore file should be placed at the root of your Unity project directory.
 
 /.vscode/
-*.meta
+# NOTE: .meta files must be committed in Unity projects (they hold the IDs that
+# scenes and prefabs use to find scripts, models, sounds and materials).
 
 # Unity generated directories
 /[Ll]ibrary/

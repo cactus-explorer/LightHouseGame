@@ -1,83 +1,55 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// The 5 note keys (A, S, D, F, Space). Each press plays the note for the current chord
+/// and steers the ships bound to that key (see ShipControls).
+/// </summary>
 public class NoteInputHandler : MonoBehaviour
 {
     [SerializeField] private TimeManager timeManager;
     [SerializeField] private AudioSource sfxAudioSource;
-    [SerializeField] private ShipSpawner shipSpawner;
+    [SerializeField] private ShipManager shipManager;
 
     [Header("Audio Clips per Note (Size 5: A, S, D, F, Space)")]
     [SerializeField] private AudioClip[] clipsC = new AudioClip[5];
     [SerializeField] private AudioClip[] clipsF = new AudioClip[5];
     [SerializeField] private AudioClip[] clipsG = new AudioClip[5];
 
+    /// <summary>Fired with the key index (0-4) on every note press. The HUD uses it to flash the key.</summary>
+    public static event Action<int> OnNoteKeyPressed;
+
+    private static readonly Key[] noteKeys = { Key.A, Key.S, Key.D, Key.F, Key.Space };
+
+    void Start()
+    {
+        if (timeManager == null) timeManager = FindAnyObjectByType<TimeManager>();
+        if (shipManager == null) shipManager = FindAnyObjectByType<ShipManager>();
+    }
+
     void Update()
     {
+        if (GamePause.BlocksInput) return;
+
         Keyboard keyboard = Keyboard.current;
         if (keyboard == null) return;
 
-        int keyIndex = -1;
-        string keyName = string.Empty;
+        for (int i = 0; i < noteKeys.Length; i++)
+        {
+            if (!keyboard[noteKeys[i]].wasPressedThisFrame) continue;
 
-        // Only use the 5 note keys: A, S, D, F, and Space (with overlapping ship controls)
-        if (keyboard.aKey.wasPressedThisFrame)
-        {
-            keyIndex = 0;
-            keyName = "A";
-            if (shipSpawner != null)
+            if (shipManager != null)
             {
-                shipSpawner.MoveShipTypeUp("DinghyA");
-                shipSpawner.MoveShipTypeUp("GalleonA");
+                foreach (var (type, direction) in ShipControls.CommandsForKey(i))
+                {
+                    shipManager.QueueMove(type, direction);
+                }
             }
-        }
-        else if (keyboard.sKey.wasPressedThisFrame)
-        {
-            keyIndex = 1;
-            keyName = "S";
-            if (shipSpawner != null)
-            {
-                shipSpawner.MoveShipTypeDown("DinghyA");
-                shipSpawner.MoveShipTypeUp("SloopB");
-            }
-        }
-        else if (keyboard.dKey.wasPressedThisFrame)
-        {
-            keyIndex = 2;
-            keyName = "D";
-            if (shipSpawner != null)
-            {
-                shipSpawner.MoveShipTypeDown("DinghyB");
-                shipSpawner.MoveShipTypeDown("SloopB");
-                shipSpawner.MoveShipTypeUp("GalleonB");
-            }
-        }
-        else if (keyboard.fKey.wasPressedThisFrame)
-        {
-            keyIndex = 3;
-            keyName = "F";
-            if (shipSpawner != null)
-            {
-                shipSpawner.MoveShipTypeUp("SloopA");
-                shipSpawner.MoveShipTypeDown("GalleonA");
-            }
-        }
-        else if (keyboard.spaceKey.wasPressedThisFrame)
-        {
-            keyIndex = 4;
-            keyName = "Space";
-            if (shipSpawner != null)
-            {
-                shipSpawner.MoveShipTypeUp("DinghyB");
-                shipSpawner.MoveShipTypeDown("SloopA");
-                shipSpawner.MoveShipTypeDown("GalleonB");
-            }
-        }
 
-        if (keyIndex != -1)
-        {
-            Debug.Log($"Input detected: {keyName} (Index: {keyIndex})");
-            TriggerSoundForCurrentNote(keyIndex);
+            OnNoteKeyPressed?.Invoke(i);
+            TriggerSoundForCurrentNote(i);
+            break; // one note per frame, as before
         }
     }
 
@@ -85,44 +57,25 @@ public class NoteInputHandler : MonoBehaviour
     {
         if (timeManager == null || sfxAudioSource == null)
         {
-            Debug.LogWarning("TimeManager or AudioSource reference is missing.");
+            Debug.LogWarning("NoteInputHandler: TimeManager or AudioSource reference is missing.");
             return;
         }
 
-        string activeNote = timeManager.CurrentNote;
-        AudioClip[] targetArray = null;
-
-        switch (activeNote)
+        AudioClip[] targetArray;
+        switch (timeManager.CurrentNote)
         {
-            case "C":
-                targetArray = clipsC;
-                break;
-            case "F":
-                targetArray = clipsF;
-                break;
-            case "G":
-                targetArray = clipsG;
-                break;
+            case "C": targetArray = clipsC; break;
+            case "F": targetArray = clipsF; break;
+            case "G": targetArray = clipsG; break;
             default:
-                Debug.Log($"No active note or unhandled note state ('{activeNote}').");
-                break;
+                Debug.Log($"No clips for chord '{timeManager.CurrentNote}'.");
+                return;
         }
 
-        if (targetArray != null)
-        {
-            if (index >= 0 && index < targetArray.Length)
-            {
-                AudioClip targetClip = targetArray[index];
-                if (targetClip != null)
-                {
-                    sfxAudioSource.PlayOneShot(targetClip);
-                    Debug.Log($"Played sound for note: {activeNote} at array index {index}");
-                }
-                else
-                {
-                    Debug.LogWarning($"AudioClip at index {index} for note {activeNote} is unassigned.");
-                }
-            }
-        }
+        if (targetArray == null || index < 0 || index >= targetArray.Length) return;
+
+        AudioClip clip = targetArray[index];
+        if (clip != null) sfxAudioSource.PlayOneShot(clip);
+        else Debug.LogWarning($"AudioClip at index {index} for chord {timeManager.CurrentNote} is unassigned.");
     }
 }
