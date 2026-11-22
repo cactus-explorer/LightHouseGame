@@ -44,3 +44,15 @@ If an old `ShipSpawner.cs` exists, delete it.
 - **▲ ▼ glyphs:** if the labels show boxes, the TMP font lacks them. Change the text in `ShipManager.UpdateLabel` to "Up"/"Dn".
 - **Pacing:** with grid radius 5, a ship takes about 10 turns (80 s) to cross. If that feels slow, try grid radius 4 or `turnsPerSpawn` 1.
 - **Camera:** game logic assumes +Z is "up" on screen.
+
+## Main menu
+
+`MainMenu.cs` builds the whole menu in code: title, Play / How to Play / Quit, a How to Play panel with every ship's keys, fade in/out, and optional menu music. Enter also starts the game. Quit is hidden in WebGL builds, where it does nothing.
+
+1. **File > New Scene**, save it as `Assets/Scenes/MainMenu.unity`.
+2. Add an empty GameObject called `Menu` with the **MainMenu** component. The scene's default camera is enough.
+3. On MainMenu, check **Game Scene Name** matches the gameplay scene (default `SampleScene`). Drop Vi's menu theme into **Menu Music** if it's ready.
+4. In **File > Build Profiles > Scene List**, put `MainMenu` **first** and `SampleScene` after it.
+5. After a level ends, **M** goes back to the menu and **R** restarts. If you rename the menu scene, change **Menu Scene Name** on GameManager to match.
+
+**For the keeper's study later:** put a collider and a **MenuInteractable** on any 3D object (window = Play, bed = Quit, letter = How to Play) and set its hover text. It lights up on hover and runs its action on click. Turn off **Show Buttons** on MainMenu once the study objects replace the buttons, and lower **Background Dim** so the scene shows through.

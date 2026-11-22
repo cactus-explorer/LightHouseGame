@@ -5,13 +5,15 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Win/lose rules for the level: save enough ships to win, wreck too many and you lose.
-/// Press R after the level ends to restart.
+/// Press R after the level ends to restart, or M to go back to the menu.
 /// </summary>
 public class GameManager : MonoBehaviour
 {
     public enum State { Playing, Won, Lost }
 
     [SerializeField] private ShipManager shipManager;
+    [Tooltip("Scene loaded by M after the level ends. Leave empty if there's no menu scene.")]
+    [SerializeField] private string menuSceneName = "MainMenu";
 
     [Header("Level Rules")]
     [SerializeField, Min(1)] private int shipsToSave = 10;
@@ -21,6 +23,7 @@ public class GameManager : MonoBehaviour
     public event Action<bool> OnGameOver;
 
     public State CurrentState { get; private set; } = State.Playing;
+    public bool HasMenu => !string.IsNullOrEmpty(menuSceneName);
     public int ShipsToSave => shipsToSave;
     public int MaxWrecks => maxWrecks;
     public int Saved => shipManager != null ? shipManager.SavedCount : 0;
@@ -49,7 +52,9 @@ public class GameManager : MonoBehaviour
     {
         if (CurrentState == State.Playing) return;
         Keyboard keyboard = Keyboard.current;
-        if (keyboard != null && keyboard.rKey.wasPressedThisFrame) Restart();
+        if (keyboard == null) return;
+        if (keyboard.rKey.wasPressedThisFrame) Restart();
+        else if (HasMenu && keyboard.mKey.wasPressedThisFrame) ReturnToMenu();
     }
 
     private void HandleShipEvent(Vector3 _)
@@ -71,5 +76,10 @@ public class GameManager : MonoBehaviour
     {
         // The scene has to be in the build's scene list for this to work.
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    public void ReturnToMenu()
+    {
+        if (HasMenu) SceneManager.LoadScene(menuSceneName);
     }
 }

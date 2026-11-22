@@ -84,9 +84,10 @@ public class GameHUD : MonoBehaviour
     private void ShowGameOver(bool won)
     {
         gameOverPanel.SetActive(true);
+        string menu = gameManager != null && gameManager.HasMenu ? "   ·   M for menu" : "";
         gameOverText.text = won
-            ? "All ships home safe!\n<size=50%>Press R to play again</size>"
-            : "Too many ships lost...\n<size=50%>Press R to try again</size>";
+            ? $"All ships home safe!\n<size=50%>Press R to play again{menu}</size>"
+            : $"Too many ships lost...\n<size=50%>Press R to try again{menu}</size>";
     }
 
     // ------------------------------------------------------------------ Building
